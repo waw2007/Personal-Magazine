@@ -117,9 +117,7 @@ Personal Magazine/
     │   ├── classifier/         # 新闻分类
     │   ├── summarizer/         # DeepSeek 摘要
     │   ├── recommender/        # 个性化推荐
-    │   ├── profile/            # 用户画像
-    │   ├── services/           # 早期数据服务层（未接入）
-    │   └── api/                # 早期额外路由（未挂载）
+    │   └── profile/            # 用户画像
     └── frontend/
         ├── package.json
         ├── vite.config.js
@@ -196,8 +194,6 @@ Personal Magazine/
 
 ### 4.3 尚未完成 / 遗留问题
 
-- [ ] `api/news.py` 路由未挂载到 `main.py`（`include_router` 缺失，早期代码）
-- [ ] `services/news_service.py` 未接入主流程（早期抽象层，可废弃或重构）
 - [ ] 聊天群消息监控（微信/QQ）—— 见下方「未来方向」，需评估合规
 
 ---
