@@ -135,6 +135,78 @@ def extract_date(title):
 
 
 # =====================
+# 详情页正文抓取 + 失效检测
+# =====================
+
+# 常见正文容器选择器（按优先级尝试）
+CONTENT_SELECTORS = [
+    ".TRS_Editor", ".v_news_content", "#vsb_content", "#vsb_content_2",
+    ".article-content", ".article", "article", ".news_content",
+    ".content", "#content", ".main-content", ".detail",
+]
+
+# 判定「内容已失效/被删除」的文本信号（保守集合，避免误伤）
+INVALID_SIGNALS = [
+    "已失效", "已删除", "已撤下", "已被删除",
+    "页面不存在", "内容不存在", "该文章已删除",
+]
+
+# 喂给 LLM 的正文最大长度（控制 token 与成本）
+MAX_CONTENT_CHARS = 1500
+
+
+def extract_content(html):
+    """从详情页 HTML 提取正文纯文本，优先命中常见容器，否则退回 body 全文。"""
+    soup = BeautifulSoup(html, "lxml")
+    for sel in CONTENT_SELECTORS:
+        node = soup.select_one(sel)
+        if node:
+            text = node.get_text(" ", strip=True)
+            text = re.sub(r"\s+", " ", text)
+            if len(text) >= 50:
+                return text
+    # 兜底：去掉脚本/样式后取 body 全文
+    for tag in soup(["script", "style", "noscript"]):
+        tag.decompose()
+    text = soup.get_text(" ", strip=True)
+    return re.sub(r"\s+", " ", text)
+
+
+def fetch_content(url):
+    """抓取详情页正文，返回 (content, status_code)。
+
+    - content：正文纯文本（失败为 None），截断到 MAX_CONTENT_CHARS
+    - status_code：HTTP 状态码（异常为 None），供失效检测用
+    """
+    try:
+        resp = requests.get(
+            url,
+            timeout=15,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        status = resp.status_code
+        if status != 200:
+            return None, status
+        html = decode_html(resp)
+        content = extract_content(html)
+        if not content:
+            return None, status
+        return content[:MAX_CONTENT_CHARS], status
+    except Exception as e:
+        print("抓取正文失败:", url, e)
+        return None, None
+
+
+def is_invalid_link(content, status):
+    """判定链接是否已失效：HTTP 非 200，或正文含失效信号。"""
+    if status is not None and status != 200:
+        return True
+    if not content:
+        return False  # 无正文时无法判定，按未失效处理
+    return any(sig in content for sig in INVALID_SIGNALS)
+
+
+# =====================
 # 单页面爬取
 # =====================
 

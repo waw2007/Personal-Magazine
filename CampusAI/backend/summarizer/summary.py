@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import date
 
 from .deepseek import summarize_news
 
@@ -10,8 +11,8 @@ def generate_summary(news, index):
     category = news.get("category", "其他")
     keywords = news.get("matched", [])
 
-    # 尝试用 LLM 生成摘要与建议
-    ai = summarize_news(title, keywords, category, source)
+    # 尝试用 LLM 生成摘要与建议（传入详情页正文，提升质量）
+    ai = summarize_news(title, keywords, category, source, news.get("content", ""))
 
     if ai:
         summary = ai.get("summary") or "该通知涉及校园相关事项，请关注具体内容。"
@@ -21,6 +22,14 @@ def generate_summary(news, index):
         summary = "该通知涉及校园相关事项，请关注具体内容。"
         suggestion = "请查看原文确认具体时间和要求"
         deadline = None
+
+    # 截止日期已过 → 标记「已过期」
+    expired = False
+    if deadline:
+        try:
+            expired = date.fromisoformat(str(deadline)[:10]) < date.today()
+        except ValueError:
+            expired = False
 
     return {
         # 新闻编号
@@ -43,6 +52,10 @@ def generate_summary(news, index):
         "date": news.get("date", ""),
         # 是否本次新发现（用于前端通知去重）
         "is_new": news.get("is_new", False),
+        # 链接是否失效（HTTP 非 200 / 正文含失效信号）
+        "invalid": bool(news.get("invalid", False)),
+        # 截止日期是否已过
+        "expired": expired,
     }
 
 

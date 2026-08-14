@@ -73,8 +73,11 @@
 分类 classifier
    │  按标题关键词分为：教务 / 奖助学金 / 竞赛 / 就业 / 科研 / 其他
    ▼
+抓正文 fetch_content
+   │  对需摘要的条目抓取详情页正文（含失效检测：HTTP 非 200 / 失效信号）
+   ▼
 摘要 summarizer
-   │  调用 DeepSeek 生成结构化条目（summary / suggestion / deadline）
+   │  调用 DeepSeek 结合「标题 + 正文」生成结构化条目（summary / suggestion / deadline）
    │  deadline 统一为 YYYY-MM-DD，无法确定则 null
    ▼
 推荐 recommender
@@ -84,6 +87,7 @@
 
 > 发布时间回填链路：标题前缀日期 → `changes.py` 的 `first_seen`（首次抓取日）→ 今天。
 > 旧通知因时间衰减自动降权，避免「过期的公示」一直霸占推荐位。
+> 失效/过期：死链（HTTP 非 200 或正文含「已删除」等信号）标记 `invalid`，截止日期已过标记 `expired`，两者均不再进入推荐。
 
 最终产物写入 `data/processed_news.json`，由前端通过 REST API 展示。
 
@@ -164,6 +168,8 @@ Personal Magazine/
 | 发布时间提取 | ✅ | 标题前缀正则 + first_seen 回填，卡片展示 📅 日期 |
 | 时间衰减推荐 | ✅ | 推荐分 × `_time_factor(date)`，旧通知自动降权 |
 | 截止日期提醒 | ✅ | deadline 标准化 YYYY-MM-DD，3 天内截止弹系统通知（去重） |
+| 正文全文摘要 | ✅ | 抓取详情页正文喂给 DeepSeek，deadline/摘要质量显著提升 |
+| 失效/过期检测 | ✅ | 死链（HTTP 非 200/失效信号）+ 已过截止日期打标记，推荐排除 |
 | 部署 | ⚠️ | 本地常驻（start.bat）+ GitHub 公开仓库 |
 
 ### 4.2 已完成的后端 API
@@ -189,7 +195,6 @@ Personal Magazine/
 - [ ] `api/news.py` 路由未挂载到 `main.py`（`include_router` 缺失，早期代码）
 - [ ] `services/news_service.py` 未接入主流程（早期抽象层，可废弃或重构）
 - [ ] 聊天群消息监控（微信/QQ）—— 见下方「未来方向」，需评估合规
-- [ ] 缺少失效检测（检测已失效/过期的通知链接）
 
 ---
 
@@ -254,6 +259,7 @@ npm run dev
 | 改分类规则 | `classifier/classifier.py` |
 | 改摘要逻辑 / 提示词 | `summarizer/summary.py`、`summarizer/deepseek.py` |
 | 改推荐逻辑 / 时间衰减 | `recommender/recommend.py`（`_time_factor`） |
+| 改正文抓取 / 失效判定 | `crawler/crawler.py`（`fetch_content` / `is_invalid_link`） |
 | 改发布时间提取 | `crawler/crawler.py`（`extract_date`）+ `changes.py`（`first_seen`） |
 | 改截止提醒逻辑 | 前端 `App.jsx` 的 deadline 提醒 effect |
 | 改用户画像字段 | `profile/user_profile.py` + `data/user_profile.json` |

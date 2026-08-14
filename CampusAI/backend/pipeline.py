@@ -2,7 +2,7 @@ import json
 import os
 
 
-from crawler.crawler import crawl, crawl_sites
+from crawler.crawler import crawl, crawl_sites, fetch_content, is_invalid_link
 from filter.news_filter import filter_news
 from classifier.classifier import classify_all
 from summarizer.summary import generate_all
@@ -105,6 +105,14 @@ def run_pipeline(sites=None):
     print(f"\n[3][4] 需要分类+摘要的新条目: {len(to_process)}")
 
     classified = classify_all(to_process)
+
+    # 3.5 抓取详情页正文：提升摘要/deadline 质量 + 失效检测
+    for it in classified:
+        content, status = fetch_content(it["url"])
+        it["content"] = content
+        it["http_status"] = status
+        it["invalid"] = is_invalid_link(content, status)
+
     processed_new = generate_all(classified)
 
     # 合并：新摘要在前，历史摘要靠后（去重）

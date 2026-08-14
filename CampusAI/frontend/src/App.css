@@ -359,6 +359,22 @@
   border-radius: 6px;
 }
 
+.tag-invalid,
+.tag-expired {
+  font-size: 12px;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.tag-invalid {
+  background: #dc2626;
+}
+
+.tag-expired {
+  background: #9ca3af;
+}
+
 .feed-toolbar {
   display: flex;
   justify-content: flex-end;

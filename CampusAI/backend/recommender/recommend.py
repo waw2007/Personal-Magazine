@@ -54,6 +54,9 @@ def recommend_news(news_list, top_n=5):
     """
     profile = load_profile()
 
+    # 过滤已失效链接（失效检测），不进入推荐
+    news_list = [n for n in news_list if not n.get("invalid")]
+
     ranked = rank_news(profile, news_list)
     engine = "llm" if ranked else "keyword"
 

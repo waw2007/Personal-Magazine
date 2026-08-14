@@ -100,20 +100,25 @@ def chat(messages, temperature=0.3, max_tokens=600):
 SYSTEM_PROMPT = (
     "你是大学生校园信息助理，擅长把校园通知提炼成简洁摘要与可执行建议。"
     "请严格只输出一个 JSON 对象，不要输出任何多余文字或代码块。"
-    'JSON 结构：{"summary": "2-3句摘要", '
-    '"deadline": "截止日期，格式严格为 YYYY-MM-DD（如 2026-08-20）；无法确定具体日期则填 null", '
+    'JSON 结构：{"summary": "2-3句摘要（结合标题与正文）", '
+    '"deadline": "截止日期，格式严格为 YYYY-MM-DD（如 2026-08-20）。'
+    '只提取「截止 / 结束 / 最后」的时间，例如报名截止、提交截止、申请截止、公示截止；'
+    '绝不要把「开始 / 启动 / 开通」时间当成截止日期。'
+    '若正文只有开始时间而没有明确截止时间，则填 null", '
     '"suggestion": "一句话行动建议"}'
 )
 
 
-def summarize_news(title, keywords, category, source):
-    """基于标题等元信息，用 LLM 生成摘要；失败返回 None。"""
+def summarize_news(title, keywords, category, source, content=""):
+    """基于标题 + 正文，用 LLM 生成摘要；失败返回 None。"""
     user_prompt = (
         f"来源：{source}\n"
         f"分类：{category}\n"
         f"命中关键词：{keywords}\n"
-        f"标题/内容：{title}\n"
+        f"标题：{title}\n"
     )
+    if content:
+        user_prompt += f"正文：{content}\n"
 
     content = chat(
         [
