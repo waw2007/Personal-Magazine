@@ -52,14 +52,19 @@ def classify_one(news):
 
 
 
-    # 比赛
+    # 比赛 / 创新创业
 
     elif any(
         word in title
         for word in [
             "比赛",
             "竞赛",
-            "获奖"
+            "获奖",
+            "大赛",
+            "大创",
+            "创新创业",
+            "双创",
+            "三创"
         ]
     ):
 

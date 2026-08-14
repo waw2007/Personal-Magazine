@@ -4,37 +4,48 @@
         "url": "https://www.dlut.edu.cn/",
         "type": "school",
         "frequency_hours": 12,
-        "keywords": [
-            "通知",
-            "公告",
-            "考试",
-            "报名"
-        ]
+        "keywords": ["通知", "公告", "考试", "报名"]
     },
     {
         "name": "软件学院官网",
         "url": "https://ss.dlut.edu.cn/",
         "type": "college",
         "frequency_hours": 6,
-        "keywords": [
-            "比赛",
-            "科研",
-            "竞赛",
-            "项目",
-            "报名"
-        ]
+        "keywords": ["比赛", "科研", "竞赛", "项目", "报名"]
     },
     {
         "name": "软件学院学生通知",
         "url": "https://ss.dlut.edu.cn/xsgz/tzgg.htm",
         "type": "student",
         "frequency_hours": 2,
-        "keywords": [
-            "四六级",
-            "奖学金",
-            "申请",
-            "截止",
-            "通知"
-        ]
+        "keywords": ["四六级", "奖学金", "申请", "截止", "通知"]
+    },
+    {
+        "name": "教学运行保障中心",
+        "url": "https://jxyxbzzx.dlut.edu.cn/",
+        "type": "teaching",
+        "frequency_hours": 6,
+        "keywords": ["选课", "考试", "补缓考", "通知"]
+    },
+    {
+        "name": "研究生院",
+        "url": "https://gs.dlut.edu.cn/",
+        "type": "graduate",
+        "frequency_hours": 12,
+        "keywords": ["招生", "推免", "博士", "复试", "通知"]
+    },
+    {
+        "name": "创新创业学院",
+        "url": "https://chuangxin.dlut.edu.cn/",
+        "type": "innovation",
+        "frequency_hours": 12,
+        "keywords": ["竞赛", "大赛", "创新", "创业", "获奖"]
+    },
+    {
+        "name": "学生工作处",
+        "url": "https://xsc.dlut.edu.cn/",
+        "type": "affairs",
+        "frequency_hours": 24,
+        "keywords": ["通知", "招聘", "值班", "奖学金"]
     }
 ]
