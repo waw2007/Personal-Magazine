@@ -159,12 +159,12 @@ def crawl_page(url):
 # Pipeline 入口
 # =====================
 
-def crawl():
-    websites = load_websites()
+def crawl_sites(sites):
+    """抓取给定的一组网站，跨站点按 URL 去重。"""
     all_news = []
     seen = set()
 
-    for site in websites:
+    for site in sites:
         print("\n======", site["name"], "======")
 
         news = crawl_page(site["url"])
@@ -180,6 +180,11 @@ def crawl():
     print("\n获取新闻:", len(all_news), "条")
 
     return all_news
+
+
+def crawl():
+    """抓取全部网站（全量抓取）。"""
+    return crawl_sites(load_websites())
 
 
 if __name__ == "__main__":

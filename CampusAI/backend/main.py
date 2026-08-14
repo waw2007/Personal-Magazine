@@ -10,6 +10,8 @@ from contextlib import asynccontextmanager
 
 from recommender.recommend import recommend_news
 from pipeline import run_pipeline
+from scheduler import due_sites, mark_crawled, site_status
+from crawler.crawler import load_websites
 
 from profile.user_profile import load_profile
 
@@ -23,16 +25,28 @@ from pydantic import BaseModel
 # =========================
 
 _pipeline_lock = threading.Lock()
-_pipeline_state = {"running": False, "last_run": None, "last_result": None}
+_pipeline_state = {
+    "running": False,
+    "last_run": None,
+    "last_result": None,
+    "last_crawled": [],
+}
 
 
-def _run_pipeline_safe():
-    """在独立线程里跑 pipeline，锁防止并发。"""
+def _run_pipeline_safe(sites=None):
+    """在独立线程里跑 pipeline，锁防止并发。
+
+    sites=None：全量抓取（手动触发）；sites=子集：增量抓取（定时调度）。
+    """
     if not _pipeline_lock.acquire(blocking=False):
         return  # 已有任务在跑
     try:
         _pipeline_state["running"] = True
-        run_pipeline()
+        run_pipeline(sites)
+        # 记录抓取时间：全量时标记所有网站，增量时只标记本次抓取的网站
+        crawled = sites if sites is not None else load_websites()
+        mark_crawled(crawled)
+        _pipeline_state["last_crawled"] = [s["name"] for s in crawled]
         _pipeline_state["last_result"] = "success"
     except Exception as e:
         _pipeline_state["last_result"] = f"error: {e}"
@@ -43,15 +57,14 @@ def _run_pipeline_safe():
 
 
 async def _scheduled_loop():
-    """每天 08:00 自动抓取一次。"""
+    """每分钟检查一次，抓取到期的网站（按各自 frequency_hours 频率）。"""
     while True:
-        now = datetime.now()
-        next_run = now.replace(hour=8, minute=0, second=0, microsecond=0)
-        if next_run <= now:
-            next_run += timedelta(days=1)
-        await asyncio.sleep((next_run - now).total_seconds())
-        if not _pipeline_state["running"]:
-            threading.Thread(target=_run_pipeline_safe, daemon=True).start()
+        await asyncio.sleep(60)
+        if _pipeline_state["running"]:
+            continue
+        due = due_sites()
+        if due:
+            threading.Thread(target=_run_pipeline_safe, args=(due,), daemon=True).start()
 
 
 @asynccontextmanager
@@ -67,7 +80,7 @@ app = FastAPI(
 
     description="校园信息智能助手 MVP",
 
-    version="0.3",
+    version="0.6",
 
     lifespan=lifespan
 
@@ -146,7 +159,7 @@ def home():
         "Campus AI Assistant is running",
 
         "version":
-        "0.3"
+        "0.6"
 
     }
 
@@ -183,7 +196,7 @@ def status():
         ],
 
         "version":
-        "0.4"
+        "0.6"
 
     }
 
@@ -363,7 +376,7 @@ def recommend():
     news = load_processed_news()
 
 
-    result = recommend_news(
+    result, engine = recommend_news(
         news
     )
 
@@ -376,6 +389,10 @@ def recommend():
 
         "profile":
         load_profile(),
+
+
+        "engine":
+        engine,
 
 
         "count":
@@ -487,4 +504,7 @@ def trigger_pipeline():
 
 @app.get("/pipeline/status")
 def pipeline_status():
-    return _pipeline_state
+    return {
+        **_pipeline_state,
+        "sites": site_status(),
+    }

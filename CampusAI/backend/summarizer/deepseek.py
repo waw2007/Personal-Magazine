@@ -136,3 +136,68 @@ def summarize_news(title, keywords, category, source):
     except json.JSONDecodeError:
         print("[DeepSeek] 返回内容无法解析为 JSON:", content[:100])
         return None
+
+
+# =====================
+# 个性化推荐打分
+# =====================
+
+RANK_SYSTEM_PROMPT = (
+    "你是大学生校园信息助理，负责判断每条校园通知与一位特定学生的相关程度。"
+    "请严格只输出一个 JSON 对象，不要输出任何多余文字或代码块。"
+    'JSON 结构：{"rankings": [{"id": 数字, "score": 0到10的整数, "reason": "一句话理由"}]}'
+    "score 越高代表越相关、越值得优先处理；请结合用户年级/专业/兴趣做语义判断，"
+    "不要只看关键词字面匹配（例如本科生不应被「研究生预报名」打高分）。"
+)
+
+
+def rank_news(profile, items):
+    """用 LLM 为候选新闻批量打分（0-10），返回 {id: (score, reason)}；失败返回 None。"""
+    if not items:
+        return {}
+
+    lines = []
+    for it in items:
+        summary = (it.get("summary") or "")[:60]
+        lines.append(
+            f"[{it.get('id')}] {it.get('category', '其他')} | "
+            f"{it.get('title', '')} | {summary}"
+        )
+
+    user_prompt = (
+        f"用户画像：{profile.get('grade', '')} / {profile.get('major', '')}，"
+        f"兴趣：{', '.join(profile.get('interests', []))}\n"
+        "候选通知：\n" + "\n".join(lines)
+    )
+
+    content = chat(
+        [
+            {"role": "system", "content": RANK_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        max_tokens=1000,
+    )
+
+    if not content:
+        return None
+
+    # 防御性解析：剥离可能的 markdown 代码块包裹
+    content = content.strip()
+    if content.startswith("```"):
+        content = content.strip("`")
+        if content.startswith("json"):
+            content = content[4:]
+
+    try:
+        data = json.loads(content)
+    except (json.JSONDecodeError, AttributeError):
+        print("[DeepSeek] 推荐打分返回无法解析为 JSON:", content[:100])
+        return None
+
+    result = {}
+    for r in data.get("rankings", []):
+        try:
+            result[int(r["id"])] = (int(r.get("score", 0)), r.get("reason", ""))
+        except (KeyError, ValueError, TypeError):
+            continue
+    return result

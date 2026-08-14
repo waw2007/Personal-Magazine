@@ -76,7 +76,7 @@
    │  调用 DeepSeek 生成结构化条目（summary / suggestion / deadline）
    ▼
 推荐 recommender
-      结合 user_profile.json 的兴趣标签打分排序
+      LLM 语义打分（结合 user_profile.json 的年级/专业/兴趣），关键词匹配兜底
 ```
 
 最终产物写入 `data/processed_news.json`，由前端通过 REST API 展示。
@@ -93,12 +93,13 @@ Personal Magazine/
 └── CampusAI/
     ├── backend/
     │   ├── main.py             # FastAPI 入口：所有路由 + 定时抓取
-    │   ├── pipeline.py         # 数据流水线编排 run_pipeline()
+    │   ├── pipeline.py         # 数据流水线编排 run_pipeline(sites=None)
+    │   ├── scheduler.py        # per-site 抓取频率调度（due_sites/mark_crawled）
     │   ├── events.py           # 倒数日事件数据层
     │   ├── requirements.txt
     │   ├── .env                # DeepSeek key（不提交）
     │   ├── .env.example        # 配置模板
-    │   ├── config/websites.json # 监控网站列表
+    │   ├── config/websites.json # 监控网站列表（含 frequency_hours）
     │   ├── data/               # 数据产物（*.json 均不提交）
     │   ├── crawler/            # 网页爬虫
     │   ├── filter/             # 关键词筛选 + 打分
@@ -129,6 +130,8 @@ Personal Magazine/
 | `processed_news.json` | 最终含摘要的数据（前端展示用） | ❌ |
 | `events.json` | 倒数日事件（个人数据） | ❌ |
 | `user_profile.json` | 用户画像（年级/专业/兴趣） | ❌ |
+| `seen.json` | 已推送 URL 基线（变更检测用） | ❌ |
+| `site_state.json` | 各网站上次抓取时间（调度用） | ❌ |
 
 > 所有 `data/*.json` 都不提交，跑 `python pipeline.py` 可重新生成；`events.json` / `user_profile.json` 由用户手动维护。
 
@@ -144,11 +147,12 @@ Personal Magazine/
 | 关键词筛选 | ✅ | 基于关键词打分 |
 | 新闻分类 | ✅ | 6 类：教务/奖助学金/竞赛/就业/科研/其他 |
 | AI 摘要 | ✅ | DeepSeek 生成 summary/suggestion/deadline |
-| 个性化推荐 | ✅ | 简单关键词匹配（未用 LLM） |
+| 个性化推荐 | ✅ | LLM 语义打分（DeepSeek）+ 关键词兜底 |
 | 前端信息流 | ✅ | 卡片流 + 分类/搜索 + 浏览器通知弹窗 |
 | 倒数日 | ✅ | 事件增删 + 剩余天数 + 到期提醒（3 天内弹通知） |
-| 定时抓取 | ✅ | 每天 08:00 自动跑 pipeline + 手动触发 |
+| 定时抓取 | ✅ | 按网站各自频率自动抓取（per-site）+ 手动全量触发 |
 | 网页变更检测 | ✅ | URL 指纹去重，只推送真正新增的通知 |
+| 抓取频率配置化 | ✅ | websites.json 配 `frequency_hours`，2h/6h/12h 分频调度 |
 | 部署 | ⚠️ | 本地常驻（start.bat）+ GitHub 公开仓库 |
 
 ### 4.2 已完成的后端 API
@@ -167,14 +171,14 @@ Personal Magazine/
 | POST | `/events` | 添加倒数日事件 |
 | DELETE | `/events/{id}` | 删除倒数日事件 |
 | POST | `/pipeline/run` | 手动触发抓取 |
-| GET | `/pipeline/status` | 抓取任务状态 |
+| GET | `/pipeline/status` | 抓取任务状态 + 各网站下次抓取时间 |
 
 ### 4.3 尚未完成 / 遗留问题
 
 - [ ] `api/news.py` 路由未挂载到 `main.py`（`include_router` 缺失，早期代码）
 - [ ] `services/news_service.py` 未接入主流程（早期抽象层，可废弃或重构）
 - [ ] 聊天群消息监控（微信/QQ）—— 见下方「未来方向」，需评估合规
-- [ ] 缺少网页变更检测、失效检测、配置化抓取频率
+- [ ] 缺少失效检测（检测已失效/过期的通知链接）
 
 ---
 
@@ -183,9 +187,7 @@ Personal Magazine/
 按优先级排序：
 
 ### 近期（低门槛，可直接做）
-1. **更智能的推荐/画像** — 目前是关键词硬匹配，可升级为 LLM 打分或向量相似度
-2. **抓取频率配置化** — 目前写死每天 08:00，可改为 per-site 频率
-3. **前端体验增强** — 已读标记、信息归档、移动端适配
+1. **前端体验增强** — 已读标记、信息归档、移动端适配
 
 ### 中期（需要设计）
 5. **聊天群消息监控** — 监控微信/QQ 群的关键词，⚠️ 涉及隐私与平台合规，需先评估法律风险
@@ -246,6 +248,7 @@ npm run dev
 | 改推荐逻辑 | `recommender/recommend.py` |
 | 改用户画像字段 | `profile/user_profile.py` + `data/user_profile.json` |
 | 改倒数日逻辑 | `events.py` |
+| 改抓取频率 / 调度 | `scheduler.py` + `config/websites.json` 的 `frequency_hours` |
 | 加新 API 路由 | `main.py` |
 | 改前端页面 | `frontend/src/App.jsx` 及相关组件 |
 | 改前端样式 | `frontend/src/App.css` |

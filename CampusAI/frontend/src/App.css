@@ -198,6 +198,16 @@
   display: inline-block;
 }
 
+.reason {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #1d4ed8;
+  background: #dbeafe;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
 .card-bottom {
   display: flex;
   align-items: center;

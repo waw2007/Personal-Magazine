@@ -27,6 +27,8 @@ function NewsCard({ item }) {
 
       {item.deadline && <p className="deadline">⏰ 截止：{item.deadline}</p>}
 
+      {item.reason && <p className="reason">🎯 推荐理由：{item.reason}</p>}
+
       <div className="card-bottom">
         <div className="keywords">
           {(item.keywords || []).map((k) => <span key={k} className="kw">#{k}</span>)}
