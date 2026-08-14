@@ -105,6 +105,7 @@ Personal Magazine/
     │   ├── main.py             # FastAPI 入口：所有路由 + 定时抓取
     │   ├── pipeline.py         # 数据流水线编排 run_pipeline(sites=None)
     │   ├── scheduler.py        # per-site 抓取频率调度（due_sites/mark_crawled）
+    │   ├── digest.py           # 今日简报（决策 Agent）
     │   ├── events.py           # 倒数日事件数据层
     │   ├── requirements.txt
     │   ├── .env                # DeepSeek key（不提交）
@@ -128,6 +129,7 @@ Personal Magazine/
             ├── App.css / index.css
             └── components/
                 ├── NewsCard.jsx         # 新闻卡片
+                ├── DigestPanel.jsx      # 今日简报面板
                 └── EventPanel.jsx       # 倒数日面板
 ```
 
@@ -170,6 +172,7 @@ Personal Magazine/
 | 截止日期提醒 | ✅ | deadline 标准化 YYYY-MM-DD，3 天内截止弹系统通知（去重） |
 | 正文全文摘要 | ✅ | 抓取详情页正文喂给 DeepSeek，deadline/摘要质量显著提升 |
 | 失效/过期检测 | ✅ | 死链（HTTP 非 200/失效信号）+ 已过截止日期打标记，推荐排除 |
+| 今日简报 | ✅ | 决策 Agent 把当天信息综合成「总览 + 最多 3 件行动项」（/digest） |
 | 部署 | ⚠️ | 本地常驻（start.bat）+ GitHub 公开仓库 |
 
 ### 4.2 已完成的后端 API
@@ -183,6 +186,7 @@ Personal Magazine/
 | GET | `/search?q=` | 关键词搜索 |
 | GET | `/latest` | 最新 5 条 |
 | GET | `/recommend` | 个性化推荐 |
+| GET | `/digest` | 今日简报（LLM 综合） |
 | GET | `/category/{category}` | 按分类查看 |
 | GET | `/events` | 倒数日列表（含剩余天数） |
 | POST | `/events` | 添加倒数日事件 |
@@ -258,7 +262,8 @@ npm run dev
 | 改筛选规则 / 打分 | `filter/scorer.py`、`filter/news_filter.py` |
 | 改分类规则 | `classifier/classifier.py` |
 | 改摘要逻辑 / 提示词 | `summarizer/summary.py`、`summarizer/deepseek.py` |
-| 改推荐逻辑 / 时间衰减 | `recommender/recommend.py`（`_time_factor`） |
+| 改推荐逻辑 / 时间衰减 | `recommender/recommend.py`（`_time_factor`、`CANDIDATE_LIMIT` 预筛） |
+| 改今日简报 | `digest.py` + `summarizer/deepseek.py`（`generate_digest`） |
 | 改正文抓取 / 失效判定 | `crawler/crawler.py`（`fetch_content` / `is_invalid_link`） |
 | 改发布时间提取 | `crawler/crawler.py`（`extract_date`）+ `changes.py`（`first_seen`） |
 | 改截止提醒逻辑 | 前端 `App.jsx` 的 deadline 提醒 effect |

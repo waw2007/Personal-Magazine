@@ -207,3 +207,60 @@ def rank_news(profile, items):
         except (KeyError, ValueError, TypeError):
             continue
     return result
+
+
+# =====================
+# 今日简报（决策/综合 Agent）
+# =====================
+
+DIGEST_SYSTEM_PROMPT = (
+    "你是大学生校园信息助理，负责把当天最重要的校园信息整理成一份「今日简报」。"
+    "请严格只输出一个 JSON 对象，不要输出任何多余文字或代码块。"
+    'JSON 结构：{"overview": "一句话总览今天最值得关注的事", '
+    '"items": [{"title": "标题", "why": "为什么与你相关", "action": "建议行动", "deadline": "截止日期(YYYY-MM-DD)或 null"}]}'
+    "items 最多 3 条，只挑真正需要用户行动或注意的事项，宁缺毋滥；"
+    "已经过期的信息不要纳入。"
+)
+
+
+def generate_digest(profile, items):
+    """基于已排名的候选，用 LLM 生成今日简报；失败返回 None。"""
+    if not items:
+        return None
+
+    lines = []
+    for it in items:
+        lines.append(
+            f"[{it.get('category', '其他')}] {it.get('title', '')} | "
+            f"摘要：{(it.get('summary') or '')[:60]} | "
+            f"截止：{it.get('deadline') or '无'}"
+        )
+
+    user_prompt = (
+        f"用户画像：{profile.get('grade', '')} / {profile.get('major', '')}，"
+        f"兴趣：{', '.join(profile.get('interests', []))}\n"
+        "今日候选（已按相关度排序）：\n" + "\n".join(lines)
+    )
+
+    content = chat(
+        [
+            {"role": "system", "content": DIGEST_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        max_tokens=800,
+    )
+
+    if not content:
+        return None
+
+    content = content.strip()
+    if content.startswith("```"):
+        content = content.strip("`")
+        if content.startswith("json"):
+            content = content[4:]
+
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        print("[DeepSeek] 简报返回无法解析为 JSON:", content[:100])
+        return None

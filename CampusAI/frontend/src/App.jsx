@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import NewsCard from './components/NewsCard'
 import EventPanel from './components/EventPanel'
+import DigestPanel from './components/DigestPanel'
 import './App.css'
 
 const API = 'http://127.0.0.1:8000'
 
 const VIEWS = [
+  { key: 'digest', label: '今日简报', endpoint: '/digest' },
   { key: 'recommend', label: '今日推荐', endpoint: '/recommend' },
   { key: 'all', label: '全部', endpoint: '/news' },
   { key: 'important', label: '重要', endpoint: '/important' },
@@ -44,7 +46,7 @@ function App() {
     Array.from(new Set([...prev, ...items.map(itemKey).filter(Boolean)]))
   )
   const load = useCallback(async () => {
-    if (view === 'events') {
+    if (view === 'events' || view === 'digest') {
       setLoading(false)
       return
     }
@@ -225,7 +227,9 @@ function App() {
       </nav>
 
       <main className="feed">
-        {view === 'events' ? (
+        {view === 'digest' ? (
+          <DigestPanel />
+        ) : view === 'events' ? (
           <EventPanel />
         ) : (
           <>

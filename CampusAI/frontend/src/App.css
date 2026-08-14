@@ -403,6 +403,65 @@
 }
 
 /* =====================
+   今日简报
+   ===================== */
+
+.digest-overview {
+  background: linear-gradient(135deg, #eff6ff, #fef3c7);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.digest-overview h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.digest-overview p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.digest-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.digest-num {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.digest-title h3 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.digest-action {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+/* =====================
    移动端适配
    ===================== */
 

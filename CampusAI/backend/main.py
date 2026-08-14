@@ -17,6 +17,8 @@ from profile.user_profile import load_profile
 
 from events import load_events, save_events, enrich
 
+from digest import daily_digest
+
 from pydantic import BaseModel
 
 
@@ -403,6 +405,15 @@ def recommend():
         result
 
     }
+# =========================
+# 今日简报
+# =========================
+
+@app.get("/digest")
+def get_digest():
+    return daily_digest()
+
+
 # =========================
 # 分类查看
 # =========================
