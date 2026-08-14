@@ -9,10 +9,13 @@ const VIEWS = [
   { key: 'recommend', label: '今日推荐', endpoint: '/recommend' },
   { key: 'all', label: '全部', endpoint: '/news' },
   { key: 'important', label: '重要', endpoint: '/important' },
+  { key: 'archived', label: '已归档', endpoint: '/news' },
   { key: 'events', label: '倒数日', endpoint: '/events' },
 ]
 
 const CATEGORIES = ['教务', '奖助学金', '竞赛', '就业', '科研', '其他']
+
+const itemKey = (it) => it.url || String(it.id)
 
 function App() {
   const [view, setView] = useState('recommend')
@@ -24,6 +27,21 @@ function App() {
   const [status, setStatus] = useState(null)
   const [notifEnabled, setNotifEnabled] = useState(
     typeof Notification !== 'undefined' && Notification.permission === 'granted'
+  )
+  const [readUrls, setReadUrls] = useState(() => JSON.parse(localStorage.getItem('pm-read') || '[]'))
+  const [archivedUrls, setArchivedUrls] = useState(() => JSON.parse(localStorage.getItem('pm-archived') || '[]'))
+
+  useEffect(() => { localStorage.setItem('pm-read', JSON.stringify(readUrls)) }, [readUrls])
+  useEffect(() => { localStorage.setItem('pm-archived', JSON.stringify(archivedUrls)) }, [archivedUrls])
+
+  const toggleRead = (url) => setReadUrls((prev) =>
+    prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
+  )
+  const toggleArchive = (url) => setArchivedUrls((prev) =>
+    prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
+  )
+  const markAllRead = () => setReadUrls((prev) =>
+    Array.from(new Set([...prev, ...items.map(itemKey).filter(Boolean)]))
   )
   const load = useCallback(async () => {
     if (view === 'events') {
@@ -124,6 +142,10 @@ function App() {
     setNotifEnabled(p === 'granted')
   }
 
+  const visibleItems = view === 'archived'
+    ? items.filter((it) => archivedUrls.includes(itemKey(it)))
+    : items.filter((it) => !archivedUrls.includes(itemKey(it)))
+
   return (
     <div className="app">
       <header className="topbar">
@@ -169,10 +191,26 @@ function App() {
           <EventPanel />
         ) : (
           <>
+            {!loading && !error && view !== 'archived' && visibleItems.length > 0 && (
+              <div className="feed-toolbar">
+                <button className="btn" onClick={markAllRead}>✓ 全部已读</button>
+              </div>
+            )}
             {loading && <p className="hint">加载中…</p>}
             {error && <p className="hint error">{error}</p>}
-            {!loading && !error && items.length === 0 && <p className="hint">暂无信息</p>}
-            {items.map((item) => <NewsCard key={item.id} item={item} />)}
+            {!loading && !error && visibleItems.length === 0 && (
+              <p className="hint">{view === 'archived' ? '暂无归档信息' : '暂无信息'}</p>
+            )}
+            {visibleItems.map((item) => (
+              <NewsCard
+                key={item.id}
+                item={item}
+                isRead={readUrls.includes(itemKey(item))}
+                isArchived={archivedUrls.includes(itemKey(item))}
+                onToggleRead={toggleRead}
+                onToggleArchive={toggleArchive}
+              />
+            ))}
           </>
         )}
       </main>

@@ -337,3 +337,84 @@
   color: #dc2626;
   background: #fee2e2;
 }
+
+/* =====================
+   已读 / 归档
+   ===================== */
+
+.card.read {
+  opacity: 0.55;
+}
+
+.read-tag {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.feed-toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mini-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* =====================
+   移动端适配
+   ===================== */
+
+@media (max-width: 600px) {
+  .app {
+    padding: 16px 12px 48px;
+  }
+
+  .topbar h1 {
+    font-size: 20px;
+  }
+
+  .search {
+    margin-left: 0;
+    min-width: 0;
+    flex: 1 1 100%;
+    order: 10;
+  }
+
+  .card {
+    padding: 14px 16px;
+  }
+
+  .title {
+    font-size: 15px;
+  }
+
+  .card-bottom {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .card-actions {
+    flex-wrap: wrap;
+  }
+}
