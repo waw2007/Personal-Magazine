@@ -210,7 +210,7 @@ def is_invalid_link(content, status):
 # 单页面爬取
 # =====================
 
-def crawl_page(url):
+def crawl_page(url, content_selector=None):
     print("访问:", url)
 
     try:
@@ -223,10 +223,17 @@ def crawl_page(url):
         html = decode_html(response)
         soup = BeautifulSoup(html, "lxml")
 
+        # 指定了内容选择器时，只在对应容器里找链接，避开页脚/导航噪声
+        if content_selector:
+            container = soup.select_one(content_selector)
+            scope = container if container else soup
+        else:
+            scope = soup
+
         results = []
         seen = set()
 
-        for a in soup.find_all("a"):
+        for a in scope.find_all("a"):
             title = clean_title(a.get_text())
             full_url = normalize_href(a.get("href"), url)
 
@@ -263,7 +270,7 @@ def crawl_sites(sites):
     for site in sites:
         print("\n======", site["name"], "======")
 
-        news = crawl_page(site["url"])
+        news = crawl_page(site["url"], site.get("content_selector"))
 
         for item in news:
             # 跨站点去重：同一 URL 只保留首次出现

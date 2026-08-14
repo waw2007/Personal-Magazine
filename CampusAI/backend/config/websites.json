@@ -47,5 +47,13 @@
         "type": "affairs",
         "frequency_hours": 24,
         "keywords": ["通知", "招聘", "值班", "奖学金"]
+    },
+    {
+        "name": "四六级考试（中国教育考试网）",
+        "url": "https://cet.neea.edu.cn/",
+        "type": "exam",
+        "frequency_hours": 24,
+        "content_selector": "#Content1",
+        "keywords": ["四六级", "考试", "报名", "成绩", "查分"]
     }
 ]

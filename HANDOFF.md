@@ -153,7 +153,7 @@ Personal Magazine/
 
 | 模块 | 状态 | 说明 |
 | --- | --- | --- |
-| 校园信息爬虫 | ✅ | 7 个 DUT 子站（官网/软件学院/教学保障/研究生院/创新创业/学生处）抓取 + 链接过滤 + 去重 |
+| 校园信息爬虫 | ✅ | 8 个站点（7 个 DUT 子站 + 四六级）抓取 + 链接过滤 + 去重，支持 `content_selector` 定位正文容器 |
 | 关键词筛选 | ✅ | 基于关键词打分（scorer.py，含推免/复试/大赛/补缓考等新来源词） |
 | 新闻分类 | ✅ | 6 类：教务/奖助学金/竞赛/就业/科研/其他 |
 | AI 摘要 | ✅ | DeepSeek 生成 summary/suggestion/deadline |
@@ -254,7 +254,7 @@ npm run dev
 
 | 想做的事 | 改哪个文件 |
 | --- | --- |
-| 新增监控网站 | `config/websites.json` |
+| 新增监控网站 | `config/websites.json`（噪声多的站点加 `content_selector` 定位容器） |
 | 改筛选规则 / 打分 | `filter/scorer.py`、`filter/news_filter.py` |
 | 改分类规则 | `classifier/classifier.py` |
 | 改摘要逻辑 / 提示词 | `summarizer/summary.py`、`summarizer/deepseek.py` |

@@ -35,7 +35,7 @@
 
 | 模块 | 说明 | 状态 |
 | --- | --- | --- |
-| 校园信息雷达 | 7 个 DUT 子站自动抓取，正文全文喂给 LLM 摘要，主动推送 | ✅ |
+| 校园信息雷达 | 8 个站点（7 个 DUT 子站 + 四六级）自动抓取，正文全文喂给 LLM 摘要，主动推送 | ✅ |
 | 个性化推荐 | LLM 语义打分（年级/专业/兴趣）+ 时间衰减 + 关键词兜底 | ✅ |
 | 今日简报 | 决策 Agent 把当天信息综合成「总览 + 最多 3 件行动项」 | ✅ |
 | 失效/过期检测 | 死链与已过截止日期打标记，推荐自动排除 | ✅ |
@@ -155,7 +155,7 @@ venv/Scripts/python.exe pipeline.py
 
 ```
 爬虫 crawl
-   │  抓取 7 个 DUT 子站，提取链接 + 标题日期
+   │  抓取配置的站点，提取链接 + 标题日期（支持 content_selector 定位正文容器）
    ▼
 筛选 filter
    │  关键词打分（scorer.py），保留 score ≥ 3
@@ -178,7 +178,7 @@ venv/Scripts/python.exe pipeline.py
 
 ## 9. 配置
 
-- **`config/websites.json`** — 监控网站列表，每项含 `name` / `url` / `type` / `frequency_hours`（抓取频率，小时）/ `keywords`。
+- **`config/websites.json`** — 监控网站列表，每项含 `name` / `url` / `type` / `frequency_hours`（抓取频率，小时）/ `keywords` / 可选 `content_selector`（CSS 选择器，只在对应容器内找链接，用于避开页脚噪声，如四六级的 `#Content1`）。
 - **`data/user_profile.json`** — 用户画像（年级 / 专业 / 兴趣标签），用于个性化推荐。
 - **`backend/.env`** — DeepSeek 配置：`DEEPSEEK_API_KEY`（必填）、`DEEPSEEK_MODEL`（可选，默认 `deepseek-chat`）、`DEEPSEEK_BASE_URL`（可选）。
 
