@@ -65,6 +65,7 @@
 ```
 爬虫 crawl
    │  抓取 config/websites.json 里配置的网站，提取并去重
+   │  extract_date() 从标题前缀正则提取发布时间（如 2025-1017 → 2025-10-17）
    ▼
 筛选 filter
    │  基于关键词打分（scorer.py），保留 score ≥ 3 的信息
@@ -74,10 +75,15 @@
    ▼
 摘要 summarizer
    │  调用 DeepSeek 生成结构化条目（summary / suggestion / deadline）
+   │  deadline 统一为 YYYY-MM-DD，无法确定则 null
    ▼
 推荐 recommender
       LLM 语义打分（结合 user_profile.json 的年级/专业/兴趣），关键词匹配兜底
+      × 时间衰减因子 _time_factor(date)（7d=1.0 / 14d=0.9 / 30d=0.8 / >30d=0.5）
 ```
+
+> 发布时间回填链路：标题前缀日期 → `changes.py` 的 `first_seen`（首次抓取日）→ 今天。
+> 旧通知因时间衰减自动降权，避免「过期的公示」一直霸占推荐位。
 
 最终产物写入 `data/processed_news.json`，由前端通过 REST API 展示。
 
@@ -155,6 +161,9 @@ Personal Magazine/
 | 定时抓取 | ✅ | 按网站各自频率自动抓取（per-site）+ 手动全量触发 |
 | 网页变更检测 | ✅ | URL 指纹去重，只推送真正新增的通知 |
 | 抓取频率配置化 | ✅ | websites.json 配 `frequency_hours`，2h/6h/12h 分频调度 |
+| 发布时间提取 | ✅ | 标题前缀正则 + first_seen 回填，卡片展示 📅 日期 |
+| 时间衰减推荐 | ✅ | 推荐分 × `_time_factor(date)`，旧通知自动降权 |
+| 截止日期提醒 | ✅ | deadline 标准化 YYYY-MM-DD，3 天内截止弹系统通知（去重） |
 | 部署 | ⚠️ | 本地常驻（start.bat）+ GitHub 公开仓库 |
 
 ### 4.2 已完成的后端 API
@@ -244,7 +253,9 @@ npm run dev
 | 改筛选规则 / 打分 | `filter/scorer.py`、`filter/news_filter.py` |
 | 改分类规则 | `classifier/classifier.py` |
 | 改摘要逻辑 / 提示词 | `summarizer/summary.py`、`summarizer/deepseek.py` |
-| 改推荐逻辑 | `recommender/recommend.py` |
+| 改推荐逻辑 / 时间衰减 | `recommender/recommend.py`（`_time_factor`） |
+| 改发布时间提取 | `crawler/crawler.py`（`extract_date`）+ `changes.py`（`first_seen`） |
+| 改截止提醒逻辑 | 前端 `App.jsx` 的 deadline 提醒 effect |
 | 改用户画像字段 | `profile/user_profile.py` + `data/user_profile.json` |
 | 改倒数日逻辑 | `events.py` |
 | 改抓取频率 / 调度 | `scheduler.py` + `config/websites.json` 的 `frequency_hours` |

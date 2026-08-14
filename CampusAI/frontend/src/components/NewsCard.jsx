@@ -17,6 +17,7 @@ function NewsCard({ item, isRead, isArchived, onToggleRead, onToggleArchive }) {
       <div className="card-top">
         <span className={`badge ${catClass}`}>{item.category}</span>
         <span className="source">{item.source}</span>
+        {item.date && <span className="date">📅 {item.date}</span>}
         {isRead && <span className="read-tag">已读</span>}
         <span className={`importance ${high ? 'high' : ''}`}>重要度 {item.importance}</span>
       </div>

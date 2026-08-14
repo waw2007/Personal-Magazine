@@ -1,3 +1,5 @@
+from datetime import date
+
 from profile.user_profile import load_profile
 from summarizer.deepseek import rank_news
 
@@ -15,6 +17,31 @@ def _keyword_score(news, profile):
             score += 5
             reason.append("匹配兴趣:" + interest)
     return score, reason
+
+
+def _time_factor(date_str):
+    """时间衰减因子：越新的信息权重越高。
+
+    - 7 天内：1.0
+    - 8-14 天：0.9
+    - 15-30 天：0.8
+    - 30 天以上：0.5
+    无日期信息按 30 天处理。
+    """
+    if not date_str:
+        return 0.5
+    try:
+        days = (date.today() - date.fromisoformat(str(date_str)[:10])).days
+    except (ValueError, TypeError):
+        return 0.5
+
+    if days <= 7:
+        return 1.0
+    if days <= 14:
+        return 0.9
+    if days <= 30:
+        return 0.8
+    return 0.5
 
 
 def recommend_news(news_list, top_n=5):
@@ -40,7 +67,7 @@ def recommend_news(news_list, top_n=5):
             score, reasons = _keyword_score(news, profile)
             reason = "、".join(reasons) if reasons else "综合重要性"
 
-        item["recommend_score"] = score
+        item["recommend_score"] = round(score * _time_factor(news.get("date")), 1)
         item["reason"] = reason
         result.append(item)
 

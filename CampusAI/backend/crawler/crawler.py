@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import os
+import re
 from urllib.parse import urljoin, urlparse
 import chardet
 
@@ -112,6 +113,28 @@ def is_navigation(title):
 
 
 # =====================
+# 发布日期提取
+# =====================
+
+DATE_PATTERN = re.compile(r"^(\d{4})\D{0,2}(\d{1,2})\D{0,2}(\d{1,2})")
+
+
+def extract_date(title):
+    """从标题前缀提取发布日期。
+
+    兼容「2025-1017 / 2026-08 07 / 2026-0807 / 2026年8月7日」等格式；
+    提取不到或值非法（如学年范围 2026-2027）返回 None。
+    """
+    m = DATE_PATTERN.match((title or "").strip())
+    if not m:
+        return None
+    year, month, day = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    if not (2000 <= year <= 2100 and 1 <= month <= 12 and 1 <= day <= 31):
+        return None
+    return f"{year:04d}-{month:02d}-{day:02d}"
+
+
+# =====================
 # 单页面爬取
 # =====================
 
@@ -144,7 +167,8 @@ def crawl_page(url):
             results.append(
                 {
                     "title": title,
-                    "url": full_url
+                    "url": full_url,
+                    "date": extract_date(title)
                 }
             )
 

@@ -100,7 +100,8 @@ def chat(messages, temperature=0.3, max_tokens=600):
 SYSTEM_PROMPT = (
     "你是大学生校园信息助理，擅长把校园通知提炼成简洁摘要与可执行建议。"
     "请严格只输出一个 JSON 对象，不要输出任何多余文字或代码块。"
-    'JSON 结构：{"summary": "2-3句摘要", "deadline": "截止日期，无则填 null", '
+    'JSON 结构：{"summary": "2-3句摘要", '
+    '"deadline": "截止日期，格式严格为 YYYY-MM-DD（如 2026-08-20）；无法确定具体日期则填 null", '
     '"suggestion": "一句话行动建议"}'
 )
 

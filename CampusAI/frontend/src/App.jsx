@@ -136,6 +136,44 @@ function App() {
     return () => clearInterval(timer)
   }, [notifEnabled])
 
+  // 截止日期提醒：检查 3 天内截止的通知（LLM 提取的 YYYY-MM-DD），各提醒一次
+  useEffect(() => {
+    const REMIND_DAYS = 3
+    const checkDeadlines = async () => {
+      if (!notifEnabled) return
+      try {
+        const res = await fetch(`${API}/news`)
+        const d = await res.json()
+        const news = Array.isArray(d.data) ? d.data : []
+        const reminded = JSON.parse(localStorage.getItem('pm-deadline') || '[]')
+        const now = new Date()
+        now.setHours(0, 0, 0, 0)
+        const due = []
+        for (const n of news) {
+          if (!n.deadline) continue
+          const m = String(n.deadline).match(/^(\d{4})-(\d{2})-(\d{2})$/)
+          if (!m) continue
+          const dl = new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00`)
+          const diffDays = Math.round((dl - now) / 86400000)
+          if (diffDays >= 0 && diffDays <= REMIND_DAYS) due.push({ ...n, _days: diffDays })
+        }
+        for (const n of due) {
+          if (!n.url || reminded.includes(n.url)) continue
+          const label = n._days === 0 ? '今天截止' : `还有 ${n._days} 天截止`
+          new Notification('截止提醒 ⏰', { body: `「${n.title}」${label}（${n.deadline}）` })
+          reminded.push(n.url)
+        }
+        const alive = new Set(news.map((n) => n.url).filter(Boolean))
+        localStorage.setItem('pm-deadline', JSON.stringify(reminded.filter((u) => alive.has(u))))
+      } catch (e) {
+        /* 忽略，下次再试 */
+      }
+    }
+    checkDeadlines()
+    const timer = setInterval(checkDeadlines, 60000)
+    return () => clearInterval(timer)
+  }, [notifEnabled])
+
   const enableNotifications = async () => {
     if (typeof Notification === 'undefined') return
     const p = await Notification.requestPermission()
