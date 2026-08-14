@@ -23,6 +23,8 @@ from reminders import get_reminders
 
 from subscriptions import get_subscriptions, add_subscription, remove_subscription, matching_news
 
+from feedback import record_feedback, get_feedback_summary
+
 from pydantic import BaseModel
 
 
@@ -458,6 +460,27 @@ def delete_subscription(sub_id: int):
 @app.get("/watch")
 def watch():
     return matching_news()
+
+
+# =========================
+# 反馈学习（已读 / 归档 → 调整推荐权重）
+# =========================
+
+class FeedbackIn(BaseModel):
+    category: str = ""
+    keywords: list = []
+    action: str  # read / unread / archive / unarchive
+
+
+@app.post("/feedback")
+def record_feedback_route(body: FeedbackIn):
+    record_feedback(body.category, body.keywords, body.action)
+    return {"message": "已记录"}
+
+
+@app.get("/feedback")
+def get_feedback():
+    return get_feedback_summary()
 
 
 # =========================

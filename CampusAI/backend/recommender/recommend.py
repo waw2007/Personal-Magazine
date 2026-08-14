@@ -2,6 +2,7 @@ from datetime import date
 
 from profile.user_profile import load_profile
 from summarizer.deepseek import rank_news
+from feedback import load_feedback, feedback_factor
 
 
 def _keyword_score(news, profile):
@@ -58,6 +59,7 @@ def recommend_news(news_list, top_n=5):
     额外附加 recommend_score 与 reason。
     """
     profile = load_profile()
+    fb = load_feedback()  # 用户已读/归档反馈，用于个性化修正
 
     # 过滤已失效链接（失效检测），不进入推荐
     news_list = [n for n in news_list if not n.get("invalid")]
@@ -86,7 +88,10 @@ def recommend_news(news_list, top_n=5):
             score, reasons = _keyword_score(news, profile)
             reason = "、".join(reasons) if reasons else "综合重要性"
 
-        item["recommend_score"] = round(score * _time_factor(news.get("date")), 1)
+        item["feedback_factor"] = round(feedback_factor(news, fb), 2)
+        item["recommend_score"] = round(
+            score * _time_factor(news.get("date")) * item["feedback_factor"], 1
+        )
         item["reason"] = reason
         result.append(item)
 

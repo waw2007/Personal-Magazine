@@ -41,12 +41,31 @@ function App() {
   useEffect(() => { localStorage.setItem('pm-read', JSON.stringify(readUrls)) }, [readUrls])
   useEffect(() => { localStorage.setItem('pm-archived', JSON.stringify(archivedUrls)) }, [archivedUrls])
 
-  const toggleRead = (url) => setReadUrls((prev) =>
-    prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
-  )
-  const toggleArchive = (url) => setArchivedUrls((prev) =>
-    prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
-  )
+  // 反馈学习：把已读/归档行为上报后端，用于个性化推荐
+  const sendFeedback = (item, action) => {
+    fetch(`${API}/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: item.category || '', keywords: item.keywords || [], action }),
+    }).catch(() => {})
+  }
+
+  const toggleRead = (item) => {
+    const key = itemKey(item)
+    const marking = !readUrls.includes(key)
+    setReadUrls((prev) =>
+      prev.includes(key) ? prev.filter((u) => u !== key) : [...prev, key]
+    )
+    sendFeedback(item, marking ? 'read' : 'unread')
+  }
+  const toggleArchive = (item) => {
+    const key = itemKey(item)
+    const archiving = !archivedUrls.includes(key)
+    setArchivedUrls((prev) =>
+      prev.includes(key) ? prev.filter((u) => u !== key) : [...prev, key]
+    )
+    sendFeedback(item, archiving ? 'archive' : 'unarchive')
+  }
   const markAllRead = () => setReadUrls((prev) =>
     Array.from(new Set([...prev, ...items.map(itemKey).filter(Boolean)]))
   )

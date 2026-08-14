@@ -108,6 +108,7 @@ Personal Magazine/
     │   ├── digest.py           # 今日简报（决策 Agent）
     │   ├── reminders.py        # 提醒 Agent（统一待办清单）
     │   ├── subscriptions.py    # 关键词订阅（关注主题）
+    │   ├── feedback.py         # 反馈学习（已读/归档 → 推荐权重）
     │   ├── events.py           # 倒数日事件数据层
     │   ├── requirements.txt
     │   ├── .env                # DeepSeek key（不提交）
@@ -144,11 +145,12 @@ Personal Magazine/
 | `processed_news.json` | 最终含摘要的数据（前端展示用） | ❌ |
 | `events.json` | 倒数日事件（个人数据） | ❌ |
 | `subscriptions.json` | 关注词列表（个人数据） | ❌ |
+| `feedback.json` | 反馈学习权重（已读/归档计数） | ❌ |
 | `user_profile.json` | 用户画像（年级/专业/兴趣） | ❌ |
 | `seen.json` | 已推送 URL 基线（变更检测用） | ❌ |
 | `site_state.json` | 各网站上次抓取时间（调度用） | ❌ |
 
-> 所有 `data/*.json` 都不提交，跑 `python pipeline.py` 可重新生成；`events.json` / `user_profile.json` / `subscriptions.json` 由用户手动维护。
+> 所有 `data/*.json` 都不提交，跑 `python pipeline.py` 可重新生成；`events.json` / `user_profile.json` / `subscriptions.json` / `feedback.json` 由用户行为自动生成或手动维护。
 
 ---
 
@@ -178,6 +180,7 @@ Personal Magazine/
 | 今日简报 | ✅ | 决策 Agent 把当天信息综合成「总览 + 最多 3 件行动项」（/digest） |
 | 提醒 Agent | ✅ | 统一待办清单：聚合「临近截止 + 到期事件」，主动弹汇总通知（/reminders） |
 | 关键词订阅 | ✅ | 自定义关注主题，命中即高亮 + 主动推送（/watch + /subscriptions） |
+| 反馈学习 | ✅ | 已读/归档行为反向调整推荐权重，越用越懂你（/feedback） |
 | 部署 | ⚠️ | 本地常驻（start.bat）+ GitHub 公开仓库 |
 
 ### 4.2 已完成的后端 API
@@ -190,7 +193,9 @@ Personal Magazine/
 | GET | `/important` | 重要新闻（importance ≥ 8） |
 | GET | `/search?q=` | 关键词搜索 |
 | GET | `/latest` | 最新 5 条 |
-| GET | `/recommend` | 个性化推荐 |
+| GET | `/recommend` | 个性化推荐（含 feedback_factor） |
+| POST | `/feedback` | 上报已读/归档反馈 |
+| GET | `/feedback` | 查看反馈权重 |
 | GET | `/digest` | 今日简报（LLM 综合） |
 | GET | `/reminders` | 提醒清单（临近截止 + 到期事件，统一待办） |
 | GET | `/watch` | 命中关注词的信息（含 matched 命中词） |
@@ -274,6 +279,7 @@ npm run dev
 | 改今日简报 | `digest.py` + `summarizer/deepseek.py`（`generate_digest`） |
 | 改提醒逻辑 | `reminders.py`（`build_reminders`）+ 前端 `App.jsx` 的提醒 effect |
 | 改关键词订阅 | `subscriptions.py`（`matching_news`）+ 前端 `WatchPanel.jsx` |
+| 改反馈学习 | `feedback.py`（`feedback_factor`）+ `recommender/recommend.py` + 前端 `App.jsx` 的 toggleRead/toggleArchive |
 | 改正文抓取 / 失效判定 | `crawler/crawler.py`（`fetch_content` / `is_invalid_link`） |
 | 改发布时间提取 | `crawler/crawler.py`（`extract_date`）+ `changes.py`（`first_seen`） |
 | 改用户画像字段 | `profile/user_profile.py` + `data/user_profile.json` |

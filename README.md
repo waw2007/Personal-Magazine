@@ -36,7 +36,8 @@
 | 模块 | 说明 | 状态 |
 | --- | --- | --- |
 | 校园信息雷达 | 8 个站点（7 个 DUT 子站 + 四六级）自动抓取，正文全文喂给 LLM 摘要，主动推送 | ✅ |
-| 个性化推荐 | LLM 语义打分（年级/专业/兴趣）+ 时间衰减 + 关键词兜底 | ✅ |
+| 个性化推荐 | LLM 语义打分（年级/专业/兴趣）+ 时间衰减 + 反馈修正 + 关键词兜底 | ✅ |
+| 反馈学习 | 已读/归档行为反向调整推荐权重，越用越懂你 | ✅ |
 | 今日简报 | 决策 Agent 把当天信息综合成「总览 + 最多 3 件行动项」 | ✅ |
 | 失效/过期检测 | 死链与已过截止日期打标记，推荐自动排除 | ✅ |
 | 提醒 Agent | 统一待办清单：聚合「临近截止通知 + 到期倒数日」，主动弹汇总通知 | ✅ |
@@ -62,6 +63,7 @@ Personal Magazine/
     │   ├── digest.py             # 今日简报（决策 Agent）
     │   ├── reminders.py          # 提醒 Agent（统一待办清单）
     │   ├── subscriptions.py      # 关键词订阅（关注主题）
+    │   ├── feedback.py           # 反馈学习（已读/归档 → 推荐权重）
     │   ├── events.py             # 倒数日事件
     │   ├── changes.py            # 变更检测 + 首次发现日期
     │   ├── requirements.txt
@@ -146,7 +148,9 @@ venv/Scripts/python.exe pipeline.py
 | GET | `/important` | 重要新闻（importance ≥ 8） |
 | GET | `/search?q=` | 按关键词搜索 |
 | GET | `/latest` | 最新 5 条 |
-| GET | `/recommend` | 个性化推荐（含 engine / reason） |
+| GET | `/recommend` | 个性化推荐（含 engine / reason / feedback_factor） |
+| POST | `/feedback` | 上报已读/归档反馈（学习个性化） |
+| GET | `/feedback` | 查看当前反馈权重 |
 | GET | `/digest` | 今日简报（LLM 综合） |
 | GET | `/reminders` | 提醒清单（临近截止 + 到期事件，统一待办） |
 | GET | `/watch` | 命中关注词的信息（含 matched 命中词） |
@@ -193,6 +197,7 @@ venv/Scripts/python.exe pipeline.py
 - **`config/websites.json`** — 监控网站列表，每项含 `name` / `url` / `type` / `frequency_hours`（抓取频率，小时）/ `keywords` / 可选 `content_selector`（CSS 选择器，只在对应容器内找链接，用于避开页脚噪声，如四六级的 `#Content1`）。
 - **`data/user_profile.json`** — 用户画像（年级 / 专业 / 兴趣标签），用于个性化推荐。
 - **`data/subscriptions.json`** — 关注词列表（用户在前端「关注」面板增删，用于命中高亮 + 推送）。
+- **`data/feedback.json`** — 反馈学习权重（已读/归档的累计计数，自动生成，用于推荐修正）。
 - **`backend/.env`** — DeepSeek 配置：`DEEPSEEK_API_KEY`（必填）、`DEEPSEEK_MODEL`（可选，默认 `deepseek-chat`）、`DEEPSEEK_BASE_URL`（可选）。
 
 ## 10. 已知问题与待办

@@ -10,7 +10,6 @@ const CATEGORY_CLASS = {
 function NewsCard({ item, isRead, isArchived, onToggleRead, onToggleArchive, matched = [] }) {
   const catClass = CATEGORY_CLASS[item.category] || 'cat-other'
   const high = item.importance >= 5
-  const key = item.url || String(item.id)
 
   return (
     <article className={`card ${isRead ? 'read' : ''}`}>
@@ -40,10 +39,10 @@ function NewsCard({ item, isRead, isArchived, onToggleRead, onToggleArchive, mat
           {(item.keywords || []).map((k) => <span key={k} className="kw">#{k}</span>)}
         </div>
         <div className="card-actions">
-          <button className="mini-btn" onClick={() => onToggleRead(key)}>
+          <button className="mini-btn" onClick={() => onToggleRead(item)}>
             {isRead ? '标为未读' : '✓ 已读'}
           </button>
-          <button className="mini-btn" onClick={() => onToggleArchive(key)}>
+          <button className="mini-btn" onClick={() => onToggleArchive(item)}>
             {isArchived ? '恢复' : '归档'}
           </button>
           <a className="link" href={item.url} target="_blank" rel="noreferrer">查看原文 →</a>
