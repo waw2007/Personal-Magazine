@@ -287,6 +287,13 @@ npm run dev
 
 访问 http://127.0.0.1:5173（前端），接口文档 http://127.0.0.1:8000/docs。
 
+**方式三：打包桌面应用为 .exe 安装包**
+```bash
+cd CampusAI/desktop
+npm run build        # = electron-builder --win，产物在 desktop/dist/
+```
+产物：`dist/Personal Magazine Setup 0.1.0.exe`（NSIS 安装包，双击安装）、`dist/win-unpacked/`（免安装解包版）。安装后桌面/开始菜单自动生成「Personal Magazine」快捷方式，双击直接出应用（无黑窗口）。注意：桌面应用的 `main.js` 里 `findBackendDir()` 有一个硬编码兜底路径 `D:/Code/Personal Magazine/CampusAI/backend`，若项目目录移动需同步修改。
+
 ### 6.3 关键文件地图（改哪里）
 
 | 想做的事 | 改哪个文件 |
@@ -325,6 +332,14 @@ npm run dev
 4. **Windows 控制台中文乱码** — GBK vs UTF-8 问题。调试时若 print 中文乱码，改把结果写 UTF-8 文件再读。
 5. **DeepSeek key 缺失时** — `summarize_news()` 会回退到占位文案，pipeline 不会崩，但摘要质量差。
 6. **定时抓取只在后端运行时生效** — 关机即停，这是本地部署的固有限制。
+7. **打包时报 `Cannot create symbolic link ... winCodeSign ... libcrypto.dylib`** — electron-builder 下载的 `winCodeSign` 压缩包里含 macOS 符号链接，Windows 下无管理员权限解压会失败（触发点是 rcedit 给 exe 写图标/版本时调用了 `DownloadWinCodeSign()`）。**修复**：用 7-Zip 以「跳过符号链接」方式手动解压，塞进缓存目录即可（存在即跳过下载）：
+   ```bash
+   SEVENZIP="CampusAI/desktop/node_modules/7zip-bin/win/x64/7za.exe"
+   CACHE="$LOCALAPPDATA/electron-builder/Cache/winCodeSign"
+   "$SEVENZIP" x -snl- -bd -y -o/tmp/wcs "$CACHE"/<任意临时>.7z
+   mkdir -p "$CACHE/winCodeSign-2.6.0" && cp -r /tmp/wcs/. "$CACHE/winCodeSign-2.6.0/"
+   ```
+   缓存目录一旦建好即长期有效，无需每次重做。
 
 ---
 

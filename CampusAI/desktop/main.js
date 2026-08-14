@@ -9,11 +9,8 @@ const BACKEND_PORT = 8000
 const API = `http://127.0.0.1:${BACKEND_PORT}`
 
 const DESKTOP_DIR = __dirname
-const BACKEND_DIR = path.join(DESKTOP_DIR, '..', 'backend')
-const FRONTEND_DIST = path.join(DESKTOP_DIR, '..', 'frontend', 'dist', 'index.html')
 const FRONTEND_DEV = 'http://127.0.0.1:5173'
 const WIDGET_HTML = path.join(DESKTOP_DIR, 'widget', 'index.html')
-const ICON_PATH = path.join(DESKTOP_DIR, 'assets', 'icon.png')
 
 let mainWindow = null
 let widgetWindow = null
@@ -22,24 +19,57 @@ let backendProc = null
 let quitting = false
 
 // =====================
-// 后端
+// 路径解析（区分「开发」与「打包」两种模式）
 // =====================
 
-function findPython() {
+function findBackendDir() {
   const candidates = [
-    path.join(BACKEND_DIR, 'venv', 'Scripts', 'python.exe'), // Windows
-    path.join(BACKEND_DIR, 'venv', 'bin', 'python'),          // macOS / Linux
+    process.env.PM_BACKEND_DIR,                          // 环境变量优先
+    path.join(__dirname, '..', 'backend'),               // 开发：desktop/../backend
+    'D:/Code/Personal Magazine/CampusAI/backend',        // 打包：个人机上的项目目录
   ]
   for (const c of candidates) {
-    if (fs.existsSync(c)) return c
+    if (c && fs.existsSync(path.join(c, 'main.py'))) return c
   }
+  return null
+}
+
+function findPython(backendDir) {
+  const candidates = [
+    path.join(backendDir, 'venv', 'Scripts', 'python.exe'),  // Windows
+    path.join(backendDir, 'venv', 'bin', 'python'),           // macOS / Linux
+  ]
+  for (const c of candidates) if (fs.existsSync(c)) return c
   return process.platform === 'win32' ? 'python' : 'python3'
 }
 
+function resolveFrontendEntry() {
+  const dev = path.join(__dirname, '..', 'frontend', 'dist', 'index.html')
+  if (fs.existsSync(dev)) return dev
+  const res = path.join(process.resourcesPath || '', 'frontend-dist', 'index.html')
+  if (fs.existsSync(res)) return res
+  return null
+}
+
+function resolveIcon() {
+  const res = path.join(process.resourcesPath || '', 'icon.png')
+  if (fs.existsSync(res)) return res
+  return path.join(__dirname, 'assets', 'icon.png')
+}
+
+// =====================
+// 后端
+// =====================
+
 function startBackend() {
-  const python = findPython()
+  const backendDir = findBackendDir()
+  if (!backendDir) {
+    console.error('[backend] 找不到后端目录，请设置环境变量 PM_BACKEND_DIR')
+    return
+  }
+  const python = findPython(backendDir)
   backendProc = spawn(python, ['-m', 'uvicorn', 'main:app', '--port', String(BACKEND_PORT)], {
-    cwd: BACKEND_DIR,
+    cwd: backendDir,
     stdio: 'ignore',
     windowsHide: true,
   })
@@ -72,15 +102,16 @@ function createMainWindow() {
     width: 920,
     height: 780,
     title: 'Personal Magazine',
-    icon: ICON_PATH,
+    icon: resolveIcon(),
     webPreferences: {
       preload: path.join(DESKTOP_DIR, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
     },
   })
-  if (fs.existsSync(FRONTEND_DIST)) {
-    mainWindow.loadFile(FRONTEND_DIST)
+  const entry = resolveFrontendEntry()
+  if (entry) {
+    mainWindow.loadFile(entry)
   } else {
     mainWindow.loadURL(FRONTEND_DEV)
   }
@@ -117,7 +148,7 @@ function createWidgetWindow() {
     skipTaskbar: true,
     resizable: false,
     hasShadow: false,
-    icon: ICON_PATH,
+    icon: resolveIcon(),
     webPreferences: {
       preload: path.join(DESKTOP_DIR, 'preload.js'),
       contextIsolation: true,
@@ -150,7 +181,7 @@ function toggleWidget() {
 // =====================
 
 function createTray() {
-  let image = nativeImage.createFromPath(ICON_PATH)
+  let image = nativeImage.createFromPath(resolveIcon())
   if (image.isEmpty()) image = nativeImage.createEmpty()
   tray = new Tray(image)
   tray.setToolTip('Personal Magazine')
