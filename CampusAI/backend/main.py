@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
@@ -24,6 +24,8 @@ from reminders import get_reminders
 from subscriptions import get_subscriptions, add_subscription, remove_subscription, matching_news
 
 from feedback import record_feedback, get_feedback_summary
+
+from calendar_export import build_calendar
 
 from pydantic import BaseModel
 
@@ -481,6 +483,20 @@ def record_feedback_route(body: FeedbackIn):
 @app.get("/feedback")
 def get_feedback():
     return get_feedback_summary()
+
+
+# =========================
+# 日历导出（.ics）
+# =========================
+
+@app.get("/export/calendar.ics")
+def export_calendar():
+    content = build_calendar()
+    return Response(
+        content=content,
+        media_type="text/calendar",
+        headers={"Content-Disposition": 'attachment; filename="campus_calendar.ics"'},
+    )
 
 
 # =========================

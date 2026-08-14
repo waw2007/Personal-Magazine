@@ -44,6 +44,7 @@
 | 关键词订阅 | 自定义关注主题，命中即高亮 + 主动推送（/watch） | ✅ |
 | 截止日期提醒 | deadline 标准化 YYYY-MM-DD，3 天内截止弹系统通知 | ✅ |
 | 个人事件管理 | 四六级 / 竞赛等倒数日 + 到期提醒 | ✅ |
+| 日历导出 | 截止日期 + 事件导出 .ics，同步手机日历 | ✅ |
 | 聊天信息智能助手 | 监控微信 / QQ 群消息 | ⚠️ 规划中（合规风险） |
 | 多 Agent 协作 | 抓取 / 理解 / 决策 / 提醒分工 | 🚧 进行中（已有简报 Agent + 提醒 Agent） |
 
@@ -64,6 +65,7 @@ Personal Magazine/
     │   ├── reminders.py          # 提醒 Agent（统一待办清单）
     │   ├── subscriptions.py      # 关键词订阅（关注主题）
     │   ├── feedback.py           # 反馈学习（已读/归档 → 推荐权重）
+    │   ├── calendar_export.py    # 日历导出（.ics）
     │   ├── events.py             # 倒数日事件
     │   ├── changes.py            # 变更检测 + 首次发现日期
     │   ├── requirements.txt
@@ -151,6 +153,7 @@ venv/Scripts/python.exe pipeline.py
 | GET | `/recommend` | 个性化推荐（含 engine / reason / feedback_factor） |
 | POST | `/feedback` | 上报已读/归档反馈（学习个性化） |
 | GET | `/feedback` | 查看当前反馈权重 |
+| GET | `/export/calendar.ics` | 导出日历文件（截止日期 + 事件） |
 | GET | `/digest` | 今日简报（LLM 综合） |
 | GET | `/reminders` | 提醒清单（临近截止 + 到期事件，统一待办） |
 | GET | `/watch` | 命中关注词的信息（含 matched 命中词） |

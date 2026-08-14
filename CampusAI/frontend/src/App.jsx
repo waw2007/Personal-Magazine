@@ -228,6 +228,7 @@ function App() {
         <h1>Personal Magazine</h1>
         <div className="topbar-meta">
           {status && <span className="status-dot">● 已收录 {status.news_count} 条信息</span>}
+          <a className="btn" href={`${API}/export/calendar.ics`}>📅 导出日历</a>
           {notifEnabled ? (
             <span className="status-on">🔔 通知已开启</span>
           ) : (
