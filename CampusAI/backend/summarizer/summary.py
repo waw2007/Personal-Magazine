@@ -39,6 +39,8 @@ def generate_summary(news, index):
         "summary": summary,
         "suggestion": suggestion,
         "deadline": deadline,
+        # 是否本次新发现（用于前端通知去重）
+        "is_new": news.get("is_new", False),
     }
 
 

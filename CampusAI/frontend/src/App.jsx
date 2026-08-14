@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import NewsCard from './components/NewsCard'
 import EventPanel from './components/EventPanel'
 import './App.css'
@@ -25,8 +25,6 @@ function App() {
   const [notifEnabled, setNotifEnabled] = useState(
     typeof Notification !== 'undefined' && Notification.permission === 'granted'
   )
-  const knownCountRef = useRef(0)
-
   const load = useCallback(async () => {
     if (view === 'events') {
       setLoading(false)
@@ -58,20 +56,27 @@ function App() {
     load()
   }, [load])
 
-  // 每 30 秒轮询状态，检测到新内容则弹系统通知
+  // 每 30 秒轮询状态，检测到新增信息（is_new）则弹系统通知
   useEffect(() => {
     const poll = async () => {
       try {
         const res = await fetch(`${API}/status`)
         const s = await res.json()
         setStatus(s)
-        if (notifEnabled && knownCountRef.current > 0 && s.news_count > knownCountRef.current) {
-          new Notification('Personal Magazine 📬', {
-            body: `发现 ${s.news_count - knownCountRef.current} 条新信息`,
-          })
-          load()
+        if (notifEnabled && Array.isArray(s.new_items)) {
+          const notified = JSON.parse(localStorage.getItem('pm-notified') || '[]')
+          const fresh = s.new_items.filter((it) => it.url && !notified.includes(it.url))
+          for (const it of fresh) {
+            new Notification('Personal Magazine 📬', { body: it.title })
+          }
+          if (fresh.length) {
+            load()
+          }
+          const alive = new Set(s.new_items.map((it) => it.url).filter(Boolean))
+          localStorage.setItem('pm-notified', JSON.stringify(
+            Array.from(new Set([...notified, ...fresh.map((it) => it.url)])).filter((u) => alive.has(u))
+          ))
         }
-        knownCountRef.current = s.news_count
       } catch (e) {
         /* 轮询失败忽略，下次重试 */
       }

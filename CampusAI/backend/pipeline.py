@@ -10,6 +10,8 @@ from classifier.classifier import classify_all
 
 from summarizer.summary import generate_all
 
+from changes import detect_new
+
 
 
 # ==========================
@@ -140,6 +142,15 @@ def run_pipeline():
 
 
 
+
+    # ======================
+    # 变更检测：对比已推送 URL，识别新增（首次运行静默建基线）
+    # ======================
+
+    new_urls = detect_new(important)
+    for item in important:
+        item["is_new"] = item.get("url") in new_urls
+    print("新增信息:", len(new_urls))
 
     # ======================
     # 3 classifier

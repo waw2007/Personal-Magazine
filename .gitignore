@@ -26,6 +26,7 @@ CampusAI/backend/data/important_news.json
 CampusAI/backend/data/processed_news.json
 CampusAI/backend/data/events.json
 CampusAI/backend/data/user_profile.json
+CampusAI/backend/data/seen.json
 
 # =====================
 # Claude Code 本地设置

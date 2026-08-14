@@ -172,8 +172,18 @@ def status():
         "news_count":
         len(news),
 
+        "new_count":
+        len([n for n in news if n.get("is_new")]),
+
+        "new_items":
+        [
+            {"url": n.get("url"), "title": n.get("title")}
+            for n in news
+            if n.get("is_new")
+        ],
+
         "version":
-        "0.3"
+        "0.4"
 
     }
 
