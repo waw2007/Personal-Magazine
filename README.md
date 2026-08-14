@@ -39,10 +39,11 @@
 | 个性化推荐 | LLM 语义打分（年级/专业/兴趣）+ 时间衰减 + 关键词兜底 | ✅ |
 | 今日简报 | 决策 Agent 把当天信息综合成「总览 + 最多 3 件行动项」 | ✅ |
 | 失效/过期检测 | 死链与已过截止日期打标记，推荐自动排除 | ✅ |
+| 提醒 Agent | 统一待办清单：聚合「临近截止通知 + 到期倒数日」，主动弹汇总通知 | ✅ |
 | 截止日期提醒 | deadline 标准化 YYYY-MM-DD，3 天内截止弹系统通知 | ✅ |
 | 个人事件管理 | 四六级 / 竞赛等倒数日 + 到期提醒 | ✅ |
 | 聊天信息智能助手 | 监控微信 / QQ 群消息 | ⚠️ 规划中（合规风险） |
-| 多 Agent 协作 | 抓取 / 理解 / 决策 / 提醒分工 | 🚧 进行中（已有简报 Agent） |
+| 多 Agent 协作 | 抓取 / 理解 / 决策 / 提醒分工 | 🚧 进行中（已有简报 Agent + 提醒 Agent） |
 
 ## 4. 目录结构
 
@@ -58,6 +59,7 @@ Personal Magazine/
     │   ├── pipeline.py           # 数据流水线 run_pipeline(sites=None)
     │   ├── scheduler.py          # 各网站抓取频率调度
     │   ├── digest.py             # 今日简报（决策 Agent）
+    │   ├── reminders.py          # 提醒 Agent（统一待办清单）
     │   ├── events.py             # 倒数日事件
     │   ├── changes.py            # 变更检测 + 首次发现日期
     │   ├── requirements.txt
@@ -144,6 +146,7 @@ venv/Scripts/python.exe pipeline.py
 | GET | `/latest` | 最新 5 条 |
 | GET | `/recommend` | 个性化推荐（含 engine / reason） |
 | GET | `/digest` | 今日简报（LLM 综合） |
+| GET | `/reminders` | 提醒清单（临近截止 + 到期事件，统一待办） |
 | GET | `/category/{category}` | 按分类查看 |
 | GET | `/events` | 倒数日列表（含剩余天数） |
 | POST | `/events` | 添加倒数日事件 |
@@ -174,6 +177,9 @@ venv/Scripts/python.exe pipeline.py
    ▼
 简报 digest
       决策 Agent 综合成「总览 + 行动项」
+   ▼
+提醒 reminders
+      提醒 Agent 聚合「临近截止 + 到期事件」为统一待办，主动弹汇总通知
 ```
 
 ## 9. 配置

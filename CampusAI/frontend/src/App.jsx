@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react'
 import NewsCard from './components/NewsCard'
 import EventPanel from './components/EventPanel'
 import DigestPanel from './components/DigestPanel'
+import ReminderPanel from './components/ReminderPanel'
 import './App.css'
 
 const API = 'http://127.0.0.1:8000'
 
 const VIEWS = [
   { key: 'digest', label: '今日简报', endpoint: '/digest' },
+  { key: 'remind', label: '提醒', endpoint: '/reminders' },
   { key: 'recommend', label: '今日推荐', endpoint: '/recommend' },
   { key: 'all', label: '全部', endpoint: '/news' },
   { key: 'important', label: '重要', endpoint: '/important' },
@@ -46,7 +48,7 @@ function App() {
     Array.from(new Set([...prev, ...items.map(itemKey).filter(Boolean)]))
   )
   const load = useCallback(async () => {
-    if (view === 'events' || view === 'digest') {
+    if (view === 'events' || view === 'digest' || view === 'remind') {
       setLoading(false)
       return
     }
@@ -106,73 +108,37 @@ function App() {
     return () => clearInterval(timer)
   }, [notifEnabled, load])
 
-  // 倒数日到期提醒：检查 3 天内的事件，各提醒一次（用 localStorage 去重）
+  // 提醒 Agent：轮询 /reminders，对「3 天内」的待办弹一条汇总通知（localStorage 去重）
   useEffect(() => {
-    const REMIND_DAYS = 3
     const checkReminders = async () => {
       if (!notifEnabled) return
       try {
-        const res = await fetch(`${API}/events`)
+        const res = await fetch(`${API}/reminders`)
         const d = await res.json()
-        const events = Array.isArray(d.data) ? d.data : []
-        const reminded = JSON.parse(localStorage.getItem('pm-reminded') || '[]')
-        const due = events.filter(
-          (ev) => ev.days_left !== null && ev.days_left >= 0 && ev.days_left <= REMIND_DAYS
-        )
-        for (const ev of due) {
-          if (reminded.includes(ev.id)) continue
-          new Notification('倒数日提醒 ⏰', {
-            body: `「${ev.name}」${ev.days_left === 0 ? '就是今天！' : `还有 ${ev.days_left} 天`}（${ev.date}）`,
-          })
-          reminded.push(ev.id)
-        }
-        // 只保留仍在列表里的事件 id，避免无限累积
-        const alive = new Set(events.map((ev) => ev.id))
-        localStorage.setItem('pm-reminded', JSON.stringify(reminded.filter((id) => alive.has(id))))
+        const data = Array.isArray(d.data) ? d.data : []
+        const key = (r) => r.url || `${r.type}:${r.title}`
+        const reminded = JSON.parse(localStorage.getItem('pm-reminders') || '[]')
+        const fresh = data.filter((r) => r.urgent && !reminded.includes(key(r)))
+        if (!fresh.length) return
+        const todayCount = fresh.filter((r) => r.days_left === 0).length
+        const title = todayCount > 0
+          ? `⏰ 今天有 ${todayCount} 件事要处理`
+          : `⏰ 未来 3 天有 ${fresh.length} 件事待办`
+        const lines = fresh.slice(0, 3).map((r) =>
+          r.days_left === 0 ? `· ${r.title}（今天）` : `· ${r.title}（还有 ${r.days_left} 天）`
+        ).join('\n')
+        const more = fresh.length > 3 ? `\n…等 ${fresh.length} 件` : ''
+        new Notification('Personal Magazine ⏰', { body: `${title}\n${lines}${more}`, tag: 'pm-reminders' })
+        const alive = new Set(data.map(key))
+        localStorage.setItem('pm-reminders', JSON.stringify(
+          Array.from(new Set([...reminded, ...fresh.map(key)])).filter((k) => alive.has(k))
+        ))
       } catch (e) {
         /* 忽略，下次再试 */
       }
     }
     checkReminders()
     const timer = setInterval(checkReminders, 60000)
-    return () => clearInterval(timer)
-  }, [notifEnabled])
-
-  // 截止日期提醒：检查 3 天内截止的通知（LLM 提取的 YYYY-MM-DD），各提醒一次
-  useEffect(() => {
-    const REMIND_DAYS = 3
-    const checkDeadlines = async () => {
-      if (!notifEnabled) return
-      try {
-        const res = await fetch(`${API}/news`)
-        const d = await res.json()
-        const news = Array.isArray(d.data) ? d.data : []
-        const reminded = JSON.parse(localStorage.getItem('pm-deadline') || '[]')
-        const now = new Date()
-        now.setHours(0, 0, 0, 0)
-        const due = []
-        for (const n of news) {
-          if (!n.deadline) continue
-          const m = String(n.deadline).match(/^(\d{4})-(\d{2})-(\d{2})$/)
-          if (!m) continue
-          const dl = new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00`)
-          const diffDays = Math.round((dl - now) / 86400000)
-          if (diffDays >= 0 && diffDays <= REMIND_DAYS) due.push({ ...n, _days: diffDays })
-        }
-        for (const n of due) {
-          if (!n.url || reminded.includes(n.url)) continue
-          const label = n._days === 0 ? '今天截止' : `还有 ${n._days} 天截止`
-          new Notification('截止提醒 ⏰', { body: `「${n.title}」${label}（${n.deadline}）` })
-          reminded.push(n.url)
-        }
-        const alive = new Set(news.map((n) => n.url).filter(Boolean))
-        localStorage.setItem('pm-deadline', JSON.stringify(reminded.filter((u) => alive.has(u))))
-      } catch (e) {
-        /* 忽略，下次再试 */
-      }
-    }
-    checkDeadlines()
-    const timer = setInterval(checkDeadlines, 60000)
     return () => clearInterval(timer)
   }, [notifEnabled])
 
@@ -229,6 +195,8 @@ function App() {
       <main className="feed">
         {view === 'digest' ? (
           <DigestPanel />
+        ) : view === 'remind' ? (
+          <ReminderPanel />
         ) : view === 'events' ? (
           <EventPanel />
         ) : (

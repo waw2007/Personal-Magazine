@@ -19,6 +19,8 @@ from events import load_events, save_events, enrich
 
 from digest import daily_digest
 
+from reminders import get_reminders
+
 from pydantic import BaseModel
 
 
@@ -412,6 +414,15 @@ def recommend():
 @app.get("/digest")
 def get_digest():
     return daily_digest()
+
+
+# =========================
+# 提醒（提醒 Agent：统一待办清单）
+# =========================
+
+@app.get("/reminders")
+def reminders():
+    return get_reminders()
 
 
 # =========================
