@@ -21,6 +21,8 @@ from digest import daily_digest
 
 from reminders import get_reminders
 
+from subscriptions import get_subscriptions, add_subscription, remove_subscription, matching_news
+
 from pydantic import BaseModel
 
 
@@ -423,6 +425,39 @@ def get_digest():
 @app.get("/reminders")
 def reminders():
     return get_reminders()
+
+
+# =========================
+# 关键词订阅（关注主题）
+# =========================
+
+class SubIn(BaseModel):
+    keyword: str
+
+
+@app.get("/subscriptions")
+def list_subscriptions():
+    return get_subscriptions()
+
+
+@app.post("/subscriptions")
+def create_subscription(body: SubIn):
+    item = add_subscription(body.keyword)
+    if item is None:
+        return {"message": "关键词为空或已存在"}
+    return {"message": "已添加", "data": item}
+
+
+@app.delete("/subscriptions/{sub_id}")
+def delete_subscription(sub_id: int):
+    if not remove_subscription(sub_id):
+        return {"message": "关键词不存在"}
+    return {"message": "已删除"}
+
+
+@app.get("/watch")
+def watch():
+    return matching_news()
 
 
 # =========================

@@ -3,6 +3,7 @@ import NewsCard from './components/NewsCard'
 import EventPanel from './components/EventPanel'
 import DigestPanel from './components/DigestPanel'
 import ReminderPanel from './components/ReminderPanel'
+import WatchPanel from './components/WatchPanel'
 import './App.css'
 
 const API = 'http://127.0.0.1:8000'
@@ -10,6 +11,7 @@ const API = 'http://127.0.0.1:8000'
 const VIEWS = [
   { key: 'digest', label: '今日简报', endpoint: '/digest' },
   { key: 'remind', label: '提醒', endpoint: '/reminders' },
+  { key: 'watch', label: '关注', endpoint: '/watch' },
   { key: 'recommend', label: '今日推荐', endpoint: '/recommend' },
   { key: 'all', label: '全部', endpoint: '/news' },
   { key: 'important', label: '重要', endpoint: '/important' },
@@ -34,6 +36,7 @@ function App() {
   )
   const [readUrls, setReadUrls] = useState(() => JSON.parse(localStorage.getItem('pm-read') || '[]'))
   const [archivedUrls, setArchivedUrls] = useState(() => JSON.parse(localStorage.getItem('pm-archived') || '[]'))
+  const [subs, setSubs] = useState([])
 
   useEffect(() => { localStorage.setItem('pm-read', JSON.stringify(readUrls)) }, [readUrls])
   useEffect(() => { localStorage.setItem('pm-archived', JSON.stringify(archivedUrls)) }, [archivedUrls])
@@ -48,7 +51,7 @@ function App() {
     Array.from(new Set([...prev, ...items.map(itemKey).filter(Boolean)]))
   )
   const load = useCallback(async () => {
-    if (view === 'events' || view === 'digest' || view === 'remind') {
+    if (view === 'events' || view === 'digest' || view === 'remind' || view === 'watch') {
       setLoading(false)
       return
     }
@@ -77,6 +80,21 @@ function App() {
   useEffect(() => {
     load()
   }, [load])
+
+  // 关注词：加载一次，切换视图时刷新（在「关注」面板增删后回来能同步高亮）
+  const refreshSubs = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/subscriptions`)
+      const d = await res.json()
+      setSubs((Array.isArray(d.data) ? d.data : []).map((s) => s.keyword))
+    } catch (e) {
+      /* 忽略 */
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshSubs()
+  }, [refreshSubs, view])
 
   // 每 30 秒轮询状态，检测到新增信息（is_new）则弹系统通知
   useEffect(() => {
@@ -142,10 +160,43 @@ function App() {
     return () => clearInterval(timer)
   }, [notifEnabled])
 
+  // 关注命中：轮询 /watch，对新命中关注词的信息弹通知（首次静默建立基线，避免历史全弹）
+  useEffect(() => {
+    let first = true
+    const checkWatch = async () => {
+      if (!notifEnabled) return
+      try {
+        const res = await fetch(`${API}/watch`)
+        const d = await res.json()
+        const list = (Array.isArray(d.data) ? d.data : []).filter((it) => it.url)
+        const baseline = JSON.parse(localStorage.getItem('pm-watch') || '[]')
+        const fresh = list.filter((it) => !baseline.includes(it.url))
+        if (!first) {
+          for (const it of fresh.slice(0, 3)) {
+            new Notification('关注命中 🔍', { body: `「${it.title}」命中：${(it.matched || []).join('、')}` })
+          }
+        }
+        first = false
+        localStorage.setItem('pm-watch', JSON.stringify(list.map((it) => it.url)))
+      } catch (e) {
+        /* 忽略，下次再试 */
+      }
+    }
+    checkWatch()
+    const timer = setInterval(checkWatch, 60000)
+    return () => clearInterval(timer)
+  }, [notifEnabled])
+
   const enableNotifications = async () => {
     if (typeof Notification === 'undefined') return
     const p = await Notification.requestPermission()
     setNotifEnabled(p === 'granted')
+  }
+
+  const matchedOf = (item) => {
+    if (!subs.length) return []
+    const text = [item.title, item.summary, ...(item.keywords || [])].join(' ').toLowerCase()
+    return subs.filter((kw) => kw && text.includes(kw.toLowerCase()))
   }
 
   const visibleItems = view === 'archived'
@@ -197,6 +248,8 @@ function App() {
           <DigestPanel />
         ) : view === 'remind' ? (
           <ReminderPanel />
+        ) : view === 'watch' ? (
+          <WatchPanel />
         ) : view === 'events' ? (
           <EventPanel />
         ) : (
@@ -219,6 +272,7 @@ function App() {
                 isArchived={archivedUrls.includes(itemKey(item))}
                 onToggleRead={toggleRead}
                 onToggleArchive={toggleArchive}
+                matched={matchedOf(item)}
               />
             ))}
           </>

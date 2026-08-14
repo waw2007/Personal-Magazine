@@ -7,7 +7,7 @@ const CATEGORY_CLASS = {
   其他: 'cat-other',
 }
 
-function NewsCard({ item, isRead, isArchived, onToggleRead, onToggleArchive }) {
+function NewsCard({ item, isRead, isArchived, onToggleRead, onToggleArchive, matched = [] }) {
   const catClass = CATEGORY_CLASS[item.category] || 'cat-other'
   const high = item.importance >= 5
   const key = item.url || String(item.id)
@@ -18,6 +18,7 @@ function NewsCard({ item, isRead, isArchived, onToggleRead, onToggleArchive }) {
         <span className={`badge ${catClass}`}>{item.category}</span>
         <span className="source">{item.source}</span>
         {item.date && <span className="date">📅 {item.date}</span>}
+        {matched.length > 0 && <span className="watch-hit">🔍 关注：{matched.join('、')}</span>}
         {item.invalid && <span className="tag-invalid">链接失效</span>}
         {item.expired && !item.invalid && <span className="tag-expired">已过期</span>}
         {isRead && <span className="read-tag">已读</span>}
