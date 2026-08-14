@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Magazine</title>
+  <link rel="stylesheet" href="widget.css" />
+</head>
+<body>
+  <div class="widget">
+    <div class="w-header">
+      <span class="w-title">📌 Personal Magazine</span>
+      <button class="w-close" id="close" title="隐藏小组件">✕</button>
+    </div>
+    <div class="w-body" id="body">
+      <div class="w-section">
+        <h3>⏰ 提醒</h3>
+        <ul id="reminders"><li class="muted">加载中…</li></ul>
+      </div>
+      <div class="w-section">
+        <h3>🆕 最新</h3>
+        <ul id="latest"><li class="muted">加载中…</li></ul>
+      </div>
+    </div>
+  </div>
+  <script src="widget.js"></script>
+</body>
+</html>

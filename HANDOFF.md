@@ -98,7 +98,8 @@ Personal Magazine/
 ├── README.md               # 面向使用者的说明
 ├── HANDOFF.md              # 本文档（面向接手开发者）
 ├── LICENSE                 # MIT
-├── start.bat               # Windows 一键启动（后端 + 前端）
+├── start.bat               # Windows 一键启动（后端 + 前端，浏览器方式）
+├── start-desktop.bat       # Windows 一键启动（桌面应用 + 小组件）
 ├── *.docx                  # 原始需求文档（不公开）
 └── CampusAI/
     ├── backend/
@@ -122,19 +123,29 @@ Personal Magazine/
     │   ├── summarizer/         # DeepSeek 摘要
     │   ├── recommender/        # 个性化推荐
     │   └── profile/            # 用户画像
-    └── frontend/
-        ├── package.json
-        ├── vite.config.js
-        └── src/
-            ├── App.jsx                  # 主组件：视图切换 + 轮询通知
-            ├── main.jsx
-            ├── App.css / index.css
-            └── components/
-                ├── NewsCard.jsx         # 新闻卡片
-                ├── DigestPanel.jsx      # 今日简报面板
-                ├── ReminderPanel.jsx    # 提醒面板
-                ├── WatchPanel.jsx       # 关注（关键词订阅）面板
-                └── EventPanel.jsx       # 倒数日面板
+    ├── frontend/
+    │   ├── package.json
+    │   ├── vite.config.js             # base: './' 使构建产物可在 file:// 下加载
+    │   └── src/
+    │       ├── App.jsx                # 主组件：视图切换 + 轮询通知
+    │       ├── main.jsx
+    │       ├── App.css / index.css
+    │       └── components/
+    │           ├── NewsCard.jsx       # 新闻卡片
+    │           ├── DigestPanel.jsx    # 今日简报面板
+    │           ├── ReminderPanel.jsx  # 提醒面板
+    │           ├── WatchPanel.jsx     # 关注（关键词订阅）面板
+    │           ├── SitesPanel.jsx     # 网站管理面板（增删改监控网站）
+    │           └── EventPanel.jsx     # 倒数日面板
+    └── desktop/                       # Electron 桌面应用
+        ├── main.js                    # 主进程：拉起后端 + 主窗口 + 托盘 + 自启
+        ├── preload.js                 # 预加载：暴露 openMain / hideWidget
+        ├── package.json               # electron + electron-builder
+        ├── assets/icon.png            # 托盘 / 应用图标
+        └── widget/                    # 桌面小组件（常驻右下角，点击跳主界面）
+            ├── index.html
+            ├── widget.js              # 拉取 /reminders + /latest，60s 刷新
+            └── widget.css
 ```
 
 ### 3.4 数据文件（`backend/data/`）
@@ -183,7 +194,9 @@ Personal Magazine/
 | 关键词订阅 | ✅ | 自定义关注主题，命中即高亮 + 主动推送（/watch + /subscriptions） |
 | 反馈学习 | ✅ | 已读/归档行为反向调整推荐权重，越用越懂你（/feedback） |
 | 日历导出 | ✅ | 截止日期 + 事件导出 .ics，同步手机日历（/export/calendar.ics） |
-| 部署 | ⚠️ | 本地常驻（start.bat）+ GitHub 公开仓库 |
+| 网站管理 | ✅ | 前端「网站」面板增删改监控网站（/websites），无需改配置文件 |
+| 桌面应用 | ✅ | Electron 主界面 + 桌面小组件 + 系统托盘 + 开机自启（start-desktop.bat） |
+| 部署 | ⚠️ | 本地常驻（start.bat / start-desktop.bat）+ GitHub 公开仓库 |
 
 ### 4.2 已完成的后端 API
 
@@ -209,6 +222,10 @@ Personal Magazine/
 | GET | `/events` | 倒数日列表（含剩余天数） |
 | POST | `/events` | 添加倒数日事件 |
 | DELETE | `/events/{id}` | 删除倒数日事件 |
+| GET | `/websites` | 监控网站列表（含 index） |
+| POST | `/websites` | 添加监控网站 |
+| PUT | `/websites/{index}` | 更新监控网站 |
+| DELETE | `/websites/{index}` | 删除监控网站 |
 | POST | `/pipeline/run` | 手动触发抓取 |
 | GET | `/pipeline/status` | 抓取任务状态 + 各网站下次抓取时间 |
 
@@ -274,7 +291,8 @@ npm run dev
 
 | 想做的事 | 改哪个文件 |
 | --- | --- |
-| 新增监控网站 | `config/websites.json`（噪声多的站点加 `content_selector` 定位容器） |
+| 新增监控网站 | 前端「网站」面板（增删改 /websites）；或直接改 `config/websites.json`（噪声多的站点加 `content_selector` 定位容器） |
+| 改桌面应用 / 小组件 | `desktop/main.js`（窗口/托盘/后端拉起）+ `desktop/widget/*`（小组件内容） |
 | 改筛选规则 / 打分 | `filter/scorer.py`、`filter/news_filter.py` |
 | 改分类规则 | `classifier/classifier.py` |
 | 改摘要逻辑 / 提示词 | `summarizer/summary.py`、`summarizer/deepseek.py` |

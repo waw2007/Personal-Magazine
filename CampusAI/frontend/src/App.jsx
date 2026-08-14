@@ -4,6 +4,7 @@ import EventPanel from './components/EventPanel'
 import DigestPanel from './components/DigestPanel'
 import ReminderPanel from './components/ReminderPanel'
 import WatchPanel from './components/WatchPanel'
+import SitesPanel from './components/SitesPanel'
 import './App.css'
 
 const API = 'http://127.0.0.1:8000'
@@ -17,6 +18,7 @@ const VIEWS = [
   { key: 'important', label: '重要', endpoint: '/important' },
   { key: 'archived', label: '已归档', endpoint: '/news' },
   { key: 'events', label: '倒数日', endpoint: '/events' },
+  { key: 'sites', label: '网站', endpoint: '/websites' },
 ]
 
 const CATEGORIES = ['教务', '奖助学金', '竞赛', '就业', '科研', '其他']
@@ -70,7 +72,7 @@ function App() {
     Array.from(new Set([...prev, ...items.map(itemKey).filter(Boolean)]))
   )
   const load = useCallback(async () => {
-    if (view === 'events' || view === 'digest' || view === 'remind' || view === 'watch') {
+    if (view === 'events' || view === 'digest' || view === 'remind' || view === 'watch' || view === 'sites') {
       setLoading(false)
       return
     }
@@ -272,6 +274,8 @@ function App() {
           <WatchPanel />
         ) : view === 'events' ? (
           <EventPanel />
+        ) : view === 'sites' ? (
+          <SitesPanel />
         ) : (
           <>
             {!loading && !error && view !== 'archived' && visibleItems.length > 0 && (

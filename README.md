@@ -45,6 +45,8 @@
 | 截止日期提醒 | deadline 标准化 YYYY-MM-DD，3 天内截止弹系统通知 | ✅ |
 | 个人事件管理 | 四六级 / 竞赛等倒数日 + 到期提醒 | ✅ |
 | 日历导出 | 截止日期 + 事件导出 .ics，同步手机日历 | ✅ |
+| 网站管理 | 前端直接增删改监控网站，无需改配置文件 | ✅ |
+| 桌面应用 | Electron 主界面 + 桌面小组件 + 系统托盘 + 开机自启 | ✅ |
 | 聊天信息智能助手 | 监控微信 / QQ 群消息 | ⚠️ 规划中（合规风险） |
 | 多 Agent 协作 | 抓取 / 理解 / 决策 / 提醒分工 | 🚧 进行中（已有简报 Agent + 提醒 Agent） |
 
@@ -54,7 +56,8 @@
 Personal Magazine/
 ├── README.md                     # 本文档（面向使用者）
 ├── HANDOFF.md                    # 开发者接手文档
-├── start.bat                     # Windows 一键启动
+├── start.bat                     # Windows 一键启动（浏览器方式）
+├── start-desktop.bat             # Windows 一键启动（桌面应用方式）
 ├── *.docx                        # 产品需求 / 技术评估文档
 └── CampusAI/
     ├── backend/
@@ -79,7 +82,8 @@ Personal Magazine/
     │   ├── summarizer/           # DeepSeek 摘要 / 打分 / 简报
     │   ├── recommender/          # 个性化推荐（时间衰减）
     │   └── profile/              # 用户画像
-    └── frontend/                 # React + Vite 前端
+    ├── frontend/                 # React + Vite 前端
+    └── desktop/                  # Electron 桌面应用（主进程 + 小组件）
 ```
 
 ## 5. 技术栈
@@ -118,6 +122,16 @@ npm install
 - 接口文档：http://127.0.0.1:8000/docs
 
 想开机自启，把 `start.bat` 的快捷方式丢进 `Win+R` → `shell:startup` 即可。
+
+### 6.3 桌面应用（推荐）
+
+双击项目根目录的 `start-desktop.bat`，会把应用包成一个真正的桌面程序：
+
+- **主界面**：和网页版一样的完整功能（自动拉起后端，无需手动开两个窗口）
+- **桌面小组件**：屏幕右下角常驻小窗，显示「临近提醒 + 最新信息」，点一下跳回主界面
+- **系统托盘**：任务栏图标常驻，右键可打开主界面 / 显隐小组件 / 开机自启 / 退出
+
+> 首次运行会自动 `npm install` 下载 Electron（约 100MB，失败请先开 Clash 代理）。小组件会自动拉取后端数据，每 60 秒刷新。
 
 ### 6.3 手动分开跑
 
@@ -164,6 +178,10 @@ venv/Scripts/python.exe pipeline.py
 | GET | `/events` | 倒数日列表（含剩余天数） |
 | POST | `/events` | 添加倒数日事件 |
 | DELETE | `/events/{id}` | 删除倒数日事件 |
+| GET | `/websites` | 监控网站列表（含 index） |
+| POST | `/websites` | 添加监控网站 |
+| PUT | `/websites/{index}` | 更新监控网站 |
+| DELETE | `/websites/{index}` | 删除监控网站 |
 | POST | `/pipeline/run` | 手动触发抓取（全量） |
 | GET | `/pipeline/status` | 抓取状态 + 各网站下次抓取时间 |
 

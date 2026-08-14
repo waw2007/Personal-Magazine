@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from recommender.recommend import recommend_news
 from pipeline import run_pipeline
 from scheduler import due_sites, mark_crawled, site_status
-from crawler.crawler import load_websites
+from crawler.crawler import load_websites, save_websites
 
 from profile.user_profile import load_profile
 
@@ -462,6 +462,72 @@ def delete_subscription(sub_id: int):
 @app.get("/watch")
 def watch():
     return matching_news()
+
+
+# =========================
+# 网站管理（前端增删改监控网站）
+# =========================
+
+class WebsiteIn(BaseModel):
+    name: str
+    url: str
+    type: str = "other"
+    frequency_hours: int = 12
+    keywords: list = []
+    content_selector: str = ""
+
+
+def _to_site(body: WebsiteIn):
+    """把前端提交的网站表单规范化为 websites.json 里的条目结构。"""
+    site = {
+        "name": body.name.strip(),
+        "url": body.url.strip(),
+        "type": body.type.strip() or "other",
+        "frequency_hours": int(body.frequency_hours) or 12,
+        "keywords": [k.strip() for k in body.keywords if str(k).strip()],
+    }
+    if body.content_selector and body.content_selector.strip():
+        site["content_selector"] = body.content_selector.strip()
+    return site
+
+
+@app.get("/websites")
+def list_websites():
+    sites = load_websites()
+    return {"count": len(sites), "data": [{"index": i, **s} for i, s in enumerate(sites)]}
+
+
+@app.post("/websites")
+def create_website(body: WebsiteIn):
+    if not body.name.strip() or not body.url.strip():
+        return {"message": "name 和 url 必填"}
+    sites = load_websites()
+    site = _to_site(body)
+    sites.append(site)
+    save_websites(sites)
+    return {"message": "已添加", "data": site}
+
+
+@app.put("/websites/{index}")
+def update_website(index: int, body: WebsiteIn):
+    if not body.name.strip() or not body.url.strip():
+        return {"message": "name 和 url 必填"}
+    sites = load_websites()
+    if index < 0 or index >= len(sites):
+        return {"message": "下标越界"}
+    sites[index] = _to_site(body)
+    save_websites(sites)
+    return {"message": "已更新", "data": sites[index]}
+
+
+@app.delete("/websites/{index}")
+def delete_website(index: int):
+    sites = load_websites()
+    if index < 0 or index >= len(sites):
+        return {"message": "下标越界"}
+    removed = sites.pop(index)
+    save_websites(sites)
+    return {"message": "已删除", "data": removed}
 
 
 # =========================

@@ -600,6 +600,78 @@
 }
 
 /* =====================
+   网站管理
+   ===================== */
+
+.sites-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.sites-form input {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.sf-name { flex: 1 1 180px; }
+.sf-url { flex: 1 1 220px; }
+.sf-type { flex: 0 1 110px; }
+.sf-freq { flex: 0 0 90px; }
+.sf-kw { flex: 1 1 160px; }
+.sf-cs { flex: 1 1 160px; }
+
+.site-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+
+.site-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.site-name {
+  margin: 0 0 2px;
+  font-size: 15px;
+}
+
+.site-type {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.site-url {
+  margin: 0 0 2px;
+  font-size: 12px;
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.site-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.site-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+/* =====================
    移动端适配
    ===================== */
 

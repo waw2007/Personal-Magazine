@@ -1,0 +1,27 @@
+{
+  "name": "personal-magazine-desktop",
+  "version": "0.1.0",
+  "description": "Personal Magazine 桌面应用（主界面 + 桌面小组件）",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.dlut.personalmagazine",
+    "productName": "Personal Magazine",
+    "files": [
+      "main.js",
+      "preload.js",
+      "widget/**/*",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

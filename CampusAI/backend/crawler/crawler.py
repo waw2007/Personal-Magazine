@@ -32,6 +32,17 @@ def load_websites():
         return json.load(f)
 
 
+def save_websites(websites):
+    """把网站列表写回 config/websites.json（前端增删改监控网站用）。"""
+    path = os.path.join(
+        BASE_DIR,
+        "config",
+        "websites.json"
+    )
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(websites, f, ensure_ascii=False, indent=4)
+
+
 # =====================
 # 编码检测
 # =====================
