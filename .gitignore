@@ -1,0 +1,45 @@
+# =====================
+# Python
+# =====================
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# =====================
+# Node / 前端
+# =====================
+node_modules/
+dist/
+
+# =====================
+# 密钥与本地配置（含 DeepSeek API key，切勿提交）
+# =====================
+.env
+
+# =====================
+# 数据产物（跑 python pipeline.py 可重新生成）
+# =====================
+CampusAI/backend/data/news.json
+CampusAI/backend/data/important_news.json
+CampusAI/backend/data/processed_news.json
+CampusAI/backend/data/events.json
+CampusAI/backend/data/user_profile.json
+
+# =====================
+# Claude Code 本地设置
+# =====================
+.claude/settings.local.json
+
+# =====================
+# 私密文档（需求 .docx 不公开）
+# =====================
+*.docx
+
+# =====================
+# 系统 / 编辑器
+# =====================
+Thumbs.db
+.DS_Store
+*.swp

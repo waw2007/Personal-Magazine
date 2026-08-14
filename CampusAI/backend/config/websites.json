@@ -1,0 +1,50 @@
+[
+    {
+        "name":"大连理工大学官网",
+
+        "url":"https://www.dlut.edu.cn/",
+
+        "type":"school",
+
+        "keywords":[
+            "通知",
+            "公告",
+            "考试",
+            "报名"
+        ]
+    },
+
+
+    {
+        "name":"软件学院官网",
+
+        "url":"https://ss.dlut.edu.cn/",
+
+        "type":"college",
+
+        "keywords":[
+            "比赛",
+            "科研",
+            "竞赛",
+            "项目",
+            "报名"
+        ]
+    },
+
+
+    {
+        "name":"软件学院学生通知",
+
+        "url":"https://ss.dlut.edu.cn/xsgz/tzgg.htm",
+
+        "type":"student",
+
+        "keywords":[
+            "四六级",
+            "奖学金",
+            "申请",
+            "截止",
+            "通知"
+        ]
+    }
+]
